@@ -82,8 +82,8 @@ class AntiplaneWave(base.PhysicsBase):
 
 		Inputs:
 		-------
-			GasConstant: mass-specific gas constant
-			SpecificHeatRatio: ratio of specific heats
+			ShearModulus: solid shear modulus
+			Density: solid density
 
 		Outputs:
 		--------
@@ -102,15 +102,19 @@ class AntiplaneWave(base.PhysicsBase):
 	def compute_additional_variable(self, var_name, Uq, flag_non_physical):
 		''' Extract state variables '''
 		sepzx = self.get_state_slice("StrainZX")
-		sepyz = self.get_state_slice("StrainZX")
-		svz = self.get_state_slice("StrainZX")
+		sepyz = self.get_state_slice("StrainYZ")
+		svz = self.get_state_slice("VelocityZ")
 		epzx = Uq[:, :, sepzx]
 		epyz = Uq[:, :, sepyz]
 		vz = Uq[:, :, svz]
 
+		ones = np.empty_like(vz)
+		# print(ones.shape)
+		ones[:,:] = 1.0
+
 		''' Unpack '''
-		mu = self.mu
-		rho = self.rho
+		mu = self.mu*ones
+		rho = self.rho*ones
 
 		''' Flag non-physical state '''
 		if flag_non_physical:
@@ -133,7 +137,7 @@ class AntiplaneWave(base.PhysicsBase):
 		if vname is self.AdditionalVariables["WaveSpeed"].name:
 			varq = get_waveSpeed()
 		elif vname is self.AdditionalVariables["MaxWaveSpeed"].name:
-			varq = get_waveSpeed
+			varq = get_waveSpeed()
 		else:
 			raise NotImplementedError
 
@@ -201,17 +205,14 @@ class Antiplane(AntiplaneWave):
 		self.BC_fcn_map.update(d)
 
 		self.source_map.update({
-			euler_source_type.StiffFriction : euler_fcns.StiffFriction,
-			euler_source_type.TaylorGreenSource :
-					euler_fcns.TaylorGreenSource,
-			euler_source_type.GravitySource : euler_fcns.GravitySource,
+			antiWave_source_type.PointSource : antiWave_fcns.PointSource,
 		})
 
-		self.conv_num_flux_map.update({
-			base_conv_num_flux_type.LaxFriedrichs :
-				euler_fcns.LaxFriedrichs2D,
-			euler_conv_num_flux_type.Roe : euler_fcns.Roe2D,
-		})
+		# self.conv_num_flux_map.update({
+		# 	base_conv_num_flux_type.LaxFriedrichs :
+		# 		antiWave_fcns.LaxFriedrichs2D,
+		# 	#TODO: Add upwind flux
+		# })
 
 	class StateVariables(Enum):
 		StrainZX = "\\varepsilon zx"
@@ -222,6 +223,12 @@ class Antiplane(AntiplaneWave):
 		iepzx = self.get_state_index("StrainZX")
 		iepyz = self.get_state_index("StrainYZ")
 		ivz = self.get_state_index("VelocityZ")
+		return iepzx, iepyz, ivz
+
+	def get_state_slices(self):
+		iepzx = self.get_state_slice("StrainZX")
+		iepyz = self.get_state_slice("StrainYZ")
+		ivz = self.get_state_slice("VelocityZ")
 
 		return iepzx, iepyz, ivz
 
@@ -241,14 +248,16 @@ class Antiplane(AntiplaneWave):
 		epyz = Uq[:, :, iepyz]
 		vz = Uq[:, :, ivz]
 
+		mu = self.mu
+		rho = self.rho
+
 		# Assemble flux matrix
 		F = np.empty(Uq.shape + (self.NDIMS,)) # [n, nq, ns, ndims]
-		F[:,:,irho,  :] = mom          # Flux of mass in all directions
-		F[:,:,irhou, 0] = rho * u2 + p # x-flux of x-momentum
-		F[:,:,irhov, 0] = rhouv        # x-flux of y-momentum
-		F[:,:,irhou, 1] = rhouv        # y-flux of x-momentum
-		F[:,:,irhov, 1] = rho * v2 + p # y-flux of y-momentum
-		F[:,:,irhoE, 0] = H * u        # x-flux of energy
-		F[:,:,irhoE, 1] = H * v        # y-flux of energy
+		F[:, :, iepzx, 0] = -0.5*vz
+		F[:, :, iepzx, 1] = 0.
+		F[:, :, iepyz, 0] = 0.
+		F[:, :, iepyz, 1] = -0.5*vz
+		F[:, :, ivz, 0] = -2.0*mu/rho*epzx
+		F[:, :, ivz, 1] = -2.0*mu/rho*epyz
 
-		return F, (u2, v2, rho, p)
+		return F, (0.5*vz, 0.5*vz, -2.0*mu/rho*epzx, -2.0*mu/rho*epyz)

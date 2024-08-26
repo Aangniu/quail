@@ -3,12 +3,12 @@
 #       quail: A lightweight discontinuous Galerkin code for
 #              teaching and prototyping
 #		<https://github.com/IhmeGroup/quail>
-#       
+#
 #		Copyright (C) 2020-2021
 #
 #       This program is distributed under the terms of the GNU
 #		General Public License v3.0. You should have received a copy
-#       of the GNU General Public License along with this program.  
+#       of the GNU General Public License along with this program.
 #		If not, see <https://www.gnu.org/licenses/>.
 #
 # ------------------------------------------------------------------------ #
@@ -97,12 +97,12 @@ class LimiterType(Enum):
 
 class ShockIndicatorType(Enum):
 	'''
-	This enum contains the available shoock indicator 
+	This enum contains the available shoock indicator
 	types. See src/numerics/limiting/ for more info.
 	'''
 	MinMod = auto()
 		# Uses a TVB modified minmod to tag troubled elements.
-	
+
 
 class SolverType(Enum):
 	'''
@@ -177,8 +177,10 @@ class PhysicsType(Enum):
 		# Model for 2nd order pendulum ODE (0D model)
 	MultispeciesPSR = auto()
 		# Model for PSR (with H2/Air chemistry)
-		
-		
+	ElaAntiplain = auto()
+		# Euler equations (1D and 2D)
+
+
 class TransportType(Enum):
 	'''
 	This enum contains the available transport types for Navier-Stokes.
