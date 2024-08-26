@@ -126,7 +126,9 @@ class PlaneSine(FcnBase):
 		epyz = np.zeros_like(x[:,:,0])
 		vz = np.zeros_like(x[:,:,0])
 
-		vz = np.sin(2*np.pi * k_wlength * x[:,:,0])
+		condition = np.abs(x[:, :, 0]) < 0.5
+		vz[condition] = np.sin(2*np.pi * k_wlength * x[:,:,0][condition])
+		epzx[condition] = -0.5 / 1.0 * vz[condition]
 
 		Uq = np.zeros([x.shape[0], x.shape[1], physics.NUM_STATE_VARS])
 		Uq[:, :, sepzx] = epzx

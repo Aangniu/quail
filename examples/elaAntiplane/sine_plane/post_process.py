@@ -20,11 +20,12 @@ plot.plot_solution(mesh, physics, solver, "VelocityZ", plot_numerical=True,
 		plot_exact=False, plot_IC=False, create_new_figure=True, fmt='bo',
 		legend_label="DG", include_mesh=True, regular_2D=True,
 		show_elem_IDs=True)
+plot.save_figure(file_name='vz2D', file_type='pdf', crop_level=2)
 
 ### Line probe (y = 1) ###
 plot.prepare_plot(close_all=False, linewidth=1.5)
 # Parameters
-xy1 = [-5.,1.]; xy2 = [5.,1.]
+xy1 = [-1.,1.]; xy2 = [1.,1.]
 # Initial condition
 plot.plot_line_probe(mesh, physics, solver, "VelocityZ", xy1=xy1, xy2=xy2,
 		plot_numerical=False, plot_exact=False, plot_IC=True,
@@ -39,4 +40,4 @@ plot.plot_line_probe(mesh, physics, solver, "VelocityZ", xy1=xy1, xy2=xy2,
 # Save figure
 plot.save_figure(file_name='line', file_type='pdf', crop_level=2)
 
-plot.show_plot()
+# plot.show_plot()
