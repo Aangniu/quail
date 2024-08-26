@@ -3,12 +3,12 @@
 #       quail: A lightweight discontinuous Galerkin code for
 #              teaching and prototyping
 #		<https://github.com/IhmeGroup/quail>
-#       
+#
 #		Copyright (C) 2020-2021
 #
 #       This program is distributed under the terms of the GNU
 #		General Public License v3.0. You should have received a copy
-#       of the GNU General Public License along with this program.  
+#       of the GNU General Public License along with this program.
 #		If not, see <https://www.gnu.org/licenses/>.
 #
 # ------------------------------------------------------------------------ #
@@ -154,7 +154,7 @@ class Euler(base.PhysicsBase):
 			varq = np.linalg.norm(mom, axis=2, keepdims=True)/rho + np.sqrt(
 					gamma*get_pressure()/rho)
 		elif vname is self.AdditionalVariables["Velocity"].name:
-			varq = np.linalg.norm(mom, axis=2, keepdims=True)/rho 
+			varq = np.linalg.norm(mom, axis=2, keepdims=True)/rho
 		elif vname is self.AdditionalVariables["XVelocity"].name:
 			varq = mom[:, :, [0]]/rho
 		elif vname is self.AdditionalVariables["YVelocity"].name:

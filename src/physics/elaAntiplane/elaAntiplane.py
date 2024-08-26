@@ -32,15 +32,18 @@ from physics.base.functions import BCType as base_BC_type
 from physics.base.functions import ConvNumFluxType as base_conv_num_flux_type
 from physics.base.functions import FcnType as base_fcn_type
 
-import physics.euler.functions as euler_fcns
-from physics.euler.functions import BCType as euler_BC_type
-from physics.euler.functions import ConvNumFluxType as \
-		euler_conv_num_flux_type
-from physics.euler.functions import FcnType as euler_fcn_type
-from physics.euler.functions import SourceType as euler_source_type
+import physics.elaAntiplane.functions as antiWave_fcns
+from physics.elaAntiplane.functions import BCType as antiWave_BC_type
+
+from physics.elaAntiplane.functions import FcnType as antiWave_fcn_type
+from physics.elaAntiplane.functions import SourceType as \
+	antiWave_source_type
+
+# from physics.euler.functions import ConvNumFluxType as \
+# 		euler_conv_num_flux_type
 
 
-class Euler(base.PhysicsBase):
+class AntiplaneWave(base.PhysicsBase):
 	'''
 	This class corresponds to the compressible Euler equations for a
 	calorically perfect gas. It inherits attributes and methods from the
@@ -71,8 +74,6 @@ class Euler(base.PhysicsBase):
 		self.BC_map.update({
 			base_BC_type.StateAll : base_fcns.StateAll,
 			base_BC_type.Extrapolate : base_fcns.Extrapolate,
-			euler_BC_type.SlipWall : euler_fcns.SlipWall,
-			euler_BC_type.PressureOutlet : euler_fcns.PressureOutlet,
 		})
 
 	def set_physical_params(self, ShearModulus=1e9, Density=1e3):
@@ -174,7 +175,7 @@ class Euler(base.PhysicsBase):
 		return np.einsum('ijk, ijkl -> ijl', dpdU, grad_Uq)
 
 
-class Euler2D(Euler):
+class Antiplane(AntiplaneWave):
 	'''
 	This class corresponds to 2D Euler equations for a calorically
 	perfect gas. It inherits attributes and methods from the Euler class.
@@ -182,7 +183,7 @@ class Euler2D(Euler):
 
 	Additional methods and attributes are commented below.
 	'''
-	NUM_STATE_VARS = 4
+	NUM_STATE_VARS = 3
 	NDIMS = 2
 
 	def __init__(self):
@@ -192,9 +193,7 @@ class Euler2D(Euler):
 		super().set_maps()
 
 		d = {
-			euler_fcn_type.IsentropicVortex : euler_fcns.IsentropicVortex,
-			euler_fcn_type.TaylorGreenVortex : euler_fcns.TaylorGreenVortex,
-			euler_fcn_type.GravityRiemann : euler_fcns.GravityRiemann,
+			antiWave_fcn_type.PlaneSine: antiWave_fcns.PlaneSine,
 		}
 
 		self.IC_fcn_map.update(d)
@@ -235,28 +234,12 @@ class Euler2D(Euler):
 
 	def get_conv_flux_interior(self, Uq):
 		# Get indices/slices of state variables
-		irho, irhou, irhov, irhoE = self.get_state_indices()
-		smom = self.get_momentum_slice()
+		iepzx, iepyz, ivz = self.get_state_indices()
 
-		rho  = Uq[:, :, irho]  # [n, nq]
-		rhou = Uq[:, :, irhou] # [n, nq]
-		rhov = Uq[:, :, irhov] # [n, nq]
-		rhoE = Uq[:, :, irhoE] # [n, nq]
-		mom  = Uq[:, :, smom]  # [n, nq, ndims]
-
-		# Get velocity in each dimension
-		u = rhou / rho
-		v = rhov / rho
-		# Get squared velocities
-		u2 = u**2
-		v2 = v**2
-
-		# Calculate pressure using the Ideal Gas Law
-		p = (self.gamma - 1.)*(rhoE - 0.5 * rho * (u2 + v2)) # [n, nq]
-		# Get off-diagonal momentum
-		rhouv = rho * u * v
-		# Get total enthalpy
-		H = rhoE + p
+		# Get state variables
+		epzx = Uq[:, :, iepzx]
+		epyz = Uq[:, :, iepyz]
+		vz = Uq[:, :, ivz]
 
 		# Assemble flux matrix
 		F = np.empty(Uq.shape + (self.NDIMS,)) # [n, nq, ns, ndims]

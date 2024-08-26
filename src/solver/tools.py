@@ -3,12 +3,12 @@
 #       quail: A lightweight discontinuous Galerkin code for
 #              teaching and prototyping
 #		<https://github.com/IhmeGroup/quail>
-#       
+#
 #		Copyright (C) 2020-2021
 #
 #       This program is distributed under the terms of the GNU
 #		General Public License v3.0. You should have received a copy
-#       of the GNU General Public License along with this program.  
+#       of the GNU General Public License along with this program.
 #		If not, see <https://www.gnu.org/licenses/>.
 #
 # ------------------------------------------------------------------------ #
@@ -31,8 +31,8 @@ import solver.tools as solver_tools
 
 def set_function_definitions(solver, params):
 	'''
-	This function sets the necessary functions for the given case 
-	dependent upon setter flags in the input deck (primarily for 
+	This function sets the necessary functions for the given case
+	dependent upon setter flags in the input deck (primarily for
 	the diffusive flux definitions)
 
 	Inputs:
@@ -110,7 +110,7 @@ def calculate_boundary_flux_integral_sum(basis_ref_grad, quad_wts, Fq):
 
 	Inputs:
 	-------
-		basis_ref_grad: evaluated gradient of the basis function in 
+		basis_ref_grad: evaluated gradient of the basis function in
 			reference space [nq, nb, ndims]
 		quad_wts: quadrature weights [nq, 1]
 		Fq: Direction diffusion flux contribution [nf, nq, ns, ndims]
