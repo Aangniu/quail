@@ -25,7 +25,7 @@ plot.save_figure(file_name='vz2D', file_type='pdf', crop_level=2)
 ### Line probe (y = 1) ###
 plot.prepare_plot(close_all=False, linewidth=1.5)
 # Parameters
-xy1 = [-1.,1.]; xy2 = [1.,1.]
+xy1 = [-1.,0.001]; xy2 = [1.,0.001]
 # Initial condition
 plot.plot_line_probe(mesh, physics, solver, "VelocityZ", xy1=xy1, xy2=xy2,
 		plot_numerical=False, plot_exact=False, plot_IC=True,
