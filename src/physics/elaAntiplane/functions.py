@@ -40,6 +40,7 @@ class FcnType(Enum):
 	sets.
 	'''
 	PlaneSine = auto()
+	Zeros = auto()
 
 class BCType(Enum):
 	'''
@@ -138,6 +139,61 @@ class PlaneSine(FcnBase):
 
 		return Uq # [ne, nq, ns]
 
+class Zeros(FcnBase):
+	'''
+	An initial value problem for plane waves
+
+	Attributes:
+	-----------
+	epzx: float
+		base strain-zx
+	epyz: float
+		base strain-yz
+	vz: float
+		base z-velocity
+	'''
+	def __init__(self, epzx=1., epyz=1., vz=1.):
+		'''
+		This method initializes the attributes.
+
+		Inputs:
+		-------
+			epzx: base strain-zx
+			epyz: base strain-yz
+			vz: base z-velocity
+
+		Outputs:
+		--------
+		    self: attributes initialized
+		'''
+		self.epzx = epzx
+		self.epyz = epyz
+		self.vz = vz
+
+	def get_state(self, physics, x, t):
+		Uq = np.zeros([x.shape[0], x.shape[1], physics.NUM_STATE_VARS])
+		mu = physics.mu
+		rho = physics.rho
+		sepzx, sepyz, svz = physics.get_state_indices()
+
+		''' Base flow '''
+		# strain-zx
+		epzx = self.epzx
+		# strain-yz
+		epyz = self.epyz
+		# z-velocity
+		vz = self.vz
+
+		epzx = np.zeros_like(x[:,:,0])
+		epyz = np.zeros_like(x[:,:,0])
+		vz = np.zeros_like(x[:,:,0])
+
+		Uq = np.zeros([x.shape[0], x.shape[1], physics.NUM_STATE_VARS])
+		Uq[:, :, sepzx] = epzx
+		Uq[:, :, sepyz] = epyz
+		Uq[:, :, svz] = vz
+
+		return Uq # [ne, nq, ns]
 '''
 -------------------
 Boundary conditions
@@ -181,7 +237,7 @@ class PointSource(SourceBase):
 	A0: float
 		point source amplitude
 	'''
-	def __init__(self, x0=np.array([0.5,0.5]), A0=0.0, **kwargs):
+	def __init__(self, x0=np.array([0.0,0.0]), A0=1.0, **kwargs):
 		super().__init__(kwargs)
 		'''
 		This method initializes the attributes.
@@ -209,8 +265,8 @@ class PointSource(SourceBase):
 		# Define gaussian-function point source
 		# TODO: Use basis functions to define point source
 		# Amplitude with a rise time centered at t0
-		t0 = 0.5
-		A = A0*np.exp(-np.sum((t - t0)**2)/0.01)
+		t0 = 0.2
+		A = A0*np.exp(-np.sum((t - t0)**2)/0.05)
 		S[:, :, ivz] = A*np.exp(-np.sum((x - x0)**2, axis=2)/0.01)
 		S[:, :, iepzx] = 0.0
 		S[:, :, iepyz] = 0.0

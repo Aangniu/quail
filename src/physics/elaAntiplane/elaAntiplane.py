@@ -42,6 +42,29 @@ from physics.elaAntiplane.functions import SourceType as \
 # from physics.euler.functions import ConvNumFluxType as \
 # 		euler_conv_num_flux_type
 
+class PointSource:
+    def __init__(self, ele_ID, dt, xs, data):
+        """
+        Initializes a PointSource object.
+
+        Parameters:
+        - ele_ID: int
+            The element ID of the point source.
+        - dt: float
+            The time step size of the point source input.
+        - xs: tuple or list
+            The location of the point source (e.g., a tuple with coordinates).
+        - data: np.ndarray
+            A NumPy array containing the time series data of the point source.
+        """
+        self.ele_ID = ele_ID
+        self.dt = dt
+        self.xs = xs
+        self.data = np.array(data)  # Ensure data is stored as a NumPy array
+
+    def __repr__(self):
+        return (f"PointSource(ele_ID={self.ele_ID}, dt={self.dt}, xs={self.xs}, "
+                f"data=Array of length {len(self.data)})")
 
 class AntiplaneWave(base.PhysicsBase):
 	'''
@@ -60,6 +83,12 @@ class AntiplaneWave(base.PhysicsBase):
 		elastic shear modulus
 	rho: float
 		solid density
+	point_sources: numpy array of the PointSource structure
+	    The PointSource structure include:
+			ele_ID: element ID,
+			dt: time step size of the point source input,
+			xs: location of the point source,
+			data: time series data of the point source
 	'''
 	PHYSICS_TYPE = general.PhysicsType.ElaAntiplain
 
@@ -67,6 +96,7 @@ class AntiplaneWave(base.PhysicsBase):
 		super().__init__()
 		self.mu = 0.
 		self.rho = 0.
+		self.point_sources = np.array([], dtype=object)
 
 	def set_maps(self):
 		super().set_maps()
@@ -198,6 +228,7 @@ class Antiplane(AntiplaneWave):
 
 		d = {
 			antiWave_fcn_type.PlaneSine: antiWave_fcns.PlaneSine,
+			antiWave_fcn_type.Zeros: antiWave_fcns.Zeros,
 		}
 
 		self.IC_fcn_map.update(d)

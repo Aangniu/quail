@@ -1,11 +1,11 @@
 TimeStepping = {
-	"FinalTime" : 0.2,
-	"TimeStepSize" : 0.01,
+	"FinalTime" : 1.0,
+	"TimeStepSize" : 0.005,
 	"TimeStepper" : "LSRK4",
 }
 
 Numerics = {
-	"SolutionOrder" : 0,
+	"SolutionOrder" : 2,
 	"SolutionBasis" : "LagrangeTri",
 	"ElementQuadrature" : "Dunavant",
 	"FaceQuadrature" : "GaussLegendre",
@@ -13,14 +13,14 @@ Numerics = {
 
 Mesh = {
 	"ElementShape" : "Triangle",
-	"NumElemsX" : 10,
-	"NumElemsY" : 10,
+	"NumElemsX" : 40,
+	"NumElemsY" : 40,
 	"xmin" : -1.,
 	"xmax" : 1.,
 	"ymin" : -1.,
 	"ymax" : 1.,
-	"PeriodicBoundariesX" : ["x2", "x1"],
-	"PeriodicBoundariesY" : ["y2", "y1"],
+	# "PeriodicBoundariesX" : ["x2", "x1"],
+	# "PeriodicBoundariesY" : ["y2", "y1"],
 }
 
 Physics = {
@@ -31,23 +31,30 @@ Physics = {
 }
 
 InitialCondition = {
-	"Function" : "PlaneSine",
+	"Function" : "Zeros",
 }
 
 ExactSolution = InitialCondition.copy()
 
-# d = {
-# 		"BCType" : "Extrapolate",
-# }
+SourceTerms = {
+	"Source1" : { # Name of source term ("Source1") doesn't matter
+		"Function" : "PointSource",
+	},
+}
 
-# BoundaryConditions = {
-# 	"x1" : d,
-# 	"x2" : d,
-#     "y1" : d,
-# 	"y2" : d,
-# }
+d = {
+		"BCType" : "Extrapolate",
+}
+
+BoundaryConditions = {
+	"x1" : d,
+	"x2" : d,
+    "y1" : d,
+	"y2" : d,
+}
 
 Output = {
 	"AutoPostProcess" : True,
 	"Verbose" : True,
+	"WriteInterval" : 10,
 }
