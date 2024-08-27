@@ -19,7 +19,7 @@ plot.prepare_plot(linewidth=0.5)
 plot.plot_solution(mesh, physics, solver, "VelocityZ", plot_numerical=True,
 		plot_exact=False, plot_IC=False, create_new_figure=True, fmt='bo',
 		legend_label="DG", include_mesh=True, regular_2D=True,
-		show_elem_IDs=True)
+		show_elem_IDs=False)
 plot.save_figure(file_name='vz2D', file_type='pdf', crop_level=2)
 
 ### Line probe (y = 1) ###

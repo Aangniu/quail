@@ -1,11 +1,11 @@
 TimeStepping = {
 	"FinalTime" : 0.7,
-	"TimeStepSize" : 0.005,
+	"TimeStepSize" : 0.01,
 	"TimeStepper" : "LSRK4",
 }
 
 Numerics = {
-	"SolutionOrder" : 2,
+	"SolutionOrder" : 1,
 	"SolutionBasis" : "LagrangeTri",
 	"ElementQuadrature" : "Dunavant",
 	"FaceQuadrature" : "GaussLegendre",
@@ -20,7 +20,7 @@ Mesh = {
 	"ymin" : -1.,
 	"ymax" : 1.,
 	# "PeriodicBoundariesX" : ["x2", "x1"],
-	"PeriodicBoundariesY" : ["y2", "y1"],
+	# "PeriodicBoundariesY" : ["y2", "y1"],
 }
 
 Physics = {
@@ -43,6 +43,8 @@ d = {
 BoundaryConditions = {
 	"x1" : d,
 	"x2" : d,
+    "y1" : d,
+	"y2" : d,
 }
 
 Output = {

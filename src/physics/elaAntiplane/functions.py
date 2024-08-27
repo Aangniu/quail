@@ -171,13 +171,14 @@ correspond to the SourceType enum members above.
 
 class PointSource(SourceBase):
 	'''
-	Stiff source term (1D) of the form:
-	S = [0, nu*rho*u, nu*rho*u^2]
+	Point source term for the anti-plane elastic wave equation.
 
 	Attributes:
 	-----------
-	nu: float
-		stiffness parameter
+	x0: numpy array
+		point source location
+	A0: float
+		point source amplitude
 	'''
 	def __init__(self, x0=np.array([0.5,0.5]), A0=0.0, **kwargs):
 		super().__init__(kwargs)
