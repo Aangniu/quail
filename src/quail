@@ -361,6 +361,10 @@ def driver(deck):
 
 	physics.set_conv_num_flux(conv_flux_type)
 	physics.set_diff_num_flux(diff_flux_type)
+	# Include point sources time series if solving elastic waves
+	# TODO: diff_flux_type = pparams.pop("DiffFluxNumerical")
+	physics.include_point_sources(mesh, physics_params["Type"])
+
 	physics.set_physical_params(**pparams)
 
 	# Initial condition

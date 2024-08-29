@@ -870,6 +870,11 @@ class DG(base.SolverBase):
 			res_elem += solver_tools.calculate_source_term_integral(
 					elem_helpers, Sq) # [ne, nb, ns]
 
+			# TODO: add point sources from time series input (SWITCH)
+			res_elem += physics.get_sources_res(self.basis, physics, self.mesh, elem_helpers, \
+							self.time)
+					# [ne, nq, ns]
+
 		# Add artificial viscosity term
 		if self.params["ArtificialViscosity"]:
 			av_param = self.params["AVParameter"]

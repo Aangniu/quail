@@ -3,12 +3,12 @@
 #       quail: A lightweight discontinuous Galerkin code for
 #              teaching and prototyping
 #		<https://github.com/IhmeGroup/quail>
-#       
+#
 #		Copyright (C) 2020-2021
 #
 #       This program is distributed under the terms of the GNU
 #		General Public License v3.0. You should have received a copy
-#       of the GNU General Public License along with this program.  
+#       of the GNU General Public License along with this program.
 #		If not, see <https://www.gnu.org/licenses/>.
 #
 # ------------------------------------------------------------------------ #
@@ -130,7 +130,7 @@ class PhysicsBase(ABC):
 	    holds information about the convective flux function
 	diff_flux_fcn: Function object
 		holds information about the diffusive flux function
-		
+
 	Inner Classes:
 	--------------
 	StateVariables: enum
@@ -276,6 +276,16 @@ class PhysicsBase(ABC):
 		'''
 		pass
 
+	def include_point_sources(self):
+		'''
+		This method include "point_sources" in physical parameters.
+
+		Notes:
+		------
+			Originally designed for elastic waves
+		'''
+		pass
+
 	def set_maps(self):
 		'''
 		This method sets the maps for the initial condition, exact solution,
@@ -301,7 +311,7 @@ class PhysicsBase(ABC):
 		    self.conv_num_flux_map: dict whose keys are the types of
 		    	convective numerical fluxes (members of ConvNumFluxType
 		    	enum); values are the corresponding classes
-		    self.diff_num_flux_map: dict whose keys are the types of 
+		    self.diff_num_flux_map: dict whose keys are the types of
 		    	diffusive numerical fluxes (members of DiffNumFluxType
 		    	enum); values are the corresponding classes
 
@@ -457,7 +467,7 @@ class PhysicsBase(ABC):
 		-------
 			diff_num_flux_type: type of diffusive numerical flux
 				(member of DiffNumFluxType enum)
-			kwargs: keyword arguments; depends on specific diffusive 
+			kwargs: keyword arguments; depends on specific diffusive
 				numerical flux
 
 		Outputs:
@@ -542,7 +552,7 @@ class PhysicsBase(ABC):
 		-------
 			Uq: values of the state variables (typically at the quadrature
 				points) [ne, nq, ns]
-			gUq: vales of the gradient of the state (typically at the 
+			gUq: vales of the gradient of the state (typically at the
 				quadrature points) [ne, nq, ns, ndims]
 
 		Outputs:
@@ -568,8 +578,8 @@ class PhysicsBase(ABC):
 			tuple of extra variables computed by interior flux
 		'''
 		Fq, vars = self.get_conv_flux_interior(Uq) # [nf, nq, ns, ndims]
-		
-		# Check needed for ADER shapes to be consistent. This appears to 
+
+		# Check needed for ADER shapes to be consistent. This appears to
 		# be a minimally invasive approach.
 		if normals.shape[1] < Fq.shape[1]:
 			normals = np.tile(normals, (normals.shape[1], 1))
@@ -611,7 +621,7 @@ class PhysicsBase(ABC):
 			gUqR: right values of the gradient of the state variables
 				(typically at the quadrature points) [nf, nq, ns, ndims]
 			normals: directions from left to right [nf, nq, ndims]
-		
+
 		Outputs:
 		--------
 			Fnum: numerical normal flux values [nf, nq, ns]
@@ -622,10 +632,10 @@ class PhysicsBase(ABC):
 		'''
 		if self.diff_flux_fcn:
 			# Compute the diffusion fluxes
-			Fnum, FL, FR = self.diff_flux_fcn.compute_flux(self, UqL, UqR, 
+			Fnum, FL, FR = self.diff_flux_fcn.compute_flux(self, UqL, UqR,
 					gUqL, gUqR, normals)
 
-			return Fnum, FL, FR # [nf, nq, ns], [nf, nq, ns, ndim], 
+			return Fnum, FL, FR # [nf, nq, ns], [nf, nq, ns, ndim],
 				# [nf, nq, ns, ndim]
 		else:
 			return 0., 0., 0. # Return zeros when diffusion fluxes not needed
@@ -643,7 +653,7 @@ class PhysicsBase(ABC):
 			gUq: interior values of the gradient of the state variables
 				(typically at the quadrature points) [nf, nq, ns, ndims]
 			normals: directions from left to right [nf, nq, ndims]
-		
+
 		Outputs:
 		--------
 			Fnum: numerical flux values[nf, nq, ns]
@@ -653,7 +663,7 @@ class PhysicsBase(ABC):
 		Fnum, FB = self.diff_flux_fcn.compute_boundary_flux(self, UqI, UqB, gUq,
 				normals)
 
-		return Fnum, FB # [nf, nq, ns, ndim], [nf, nq, nb, ndim], 
+		return Fnum, FB # [nf, nq, ns, ndim], [nf, nq, nb, ndim],
 
 	def eval_source_terms(self, Uq, xphys, time, Sq):
 		'''

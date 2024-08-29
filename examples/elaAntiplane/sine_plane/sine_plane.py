@@ -1,11 +1,11 @@
 TimeStepping = {
-	"FinalTime" : 1.0,
-	"TimeStepSize" : 0.005,
+	"FinalTime" : 10.0,
+	"TimeStepSize" : 0.01,
 	"TimeStepper" : "LSRK4",
 }
 
 Numerics = {
-	"SolutionOrder" : 2,
+	"SolutionOrder" : 3,
 	"SolutionBasis" : "LagrangeTri",
 	"ElementQuadrature" : "Dunavant",
 	"FaceQuadrature" : "GaussLegendre",
@@ -13,12 +13,12 @@ Numerics = {
 
 Mesh = {
 	"ElementShape" : "Triangle",
-	"NumElemsX" : 40,
-	"NumElemsY" : 40,
-	"xmin" : -1.,
-	"xmax" : 1.,
-	"ymin" : -1.,
-	"ymax" : 1.,
+	"NumElemsX" : 50,
+	"NumElemsY" : 50,
+	"xmin" : -5.,
+	"xmax" : 5.,
+	"ymin" : -5.,
+	"ymax" : 5.,
 	# "PeriodicBoundariesX" : ["x2", "x1"],
 	# "PeriodicBoundariesY" : ["y2", "y1"],
 }
@@ -54,7 +54,8 @@ BoundaryConditions = {
 }
 
 Output = {
+    "Prefix": "output/Data",
 	"AutoPostProcess" : True,
 	"Verbose" : True,
-	"WriteInterval" : 10,
+	"WriteInterval" : 50,
 }

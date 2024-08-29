@@ -237,7 +237,7 @@ class PointSource(SourceBase):
 	A0: float
 		point source amplitude
 	'''
-	def __init__(self, x0=np.array([0.0,0.0]), A0=1.0, **kwargs):
+	def __init__(self, x0=np.array([0.0,0.0]), A0=0.0, **kwargs):
 		super().__init__(kwargs)
 		'''
 		This method initializes the attributes.

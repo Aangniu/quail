@@ -123,6 +123,36 @@ def plot_1D(physics, x, var_plot, ylabel, fmt, legend_label, skip=None):
 	plt.plot(x[::skip], var_plot[::skip], fmt, label=legend_label)
 	plt.ylabel(ylabel)
 
+def plot_1D_time(physics, x, var_plot, ylabel, fmt, legend_label, lw, skip=None):
+	'''
+	This function creates a 1D plot.
+
+	Inputs:
+	-------
+		physics: physics object
+		x: x-coordinates [num_pts, 1]
+		var_plot: variable to plot evaluated at x [num_pts, 1]
+		ylabel: y-axis label
+		fmt: format string for plotting, e.g. "bo" for blue circles
+		legend_label: legend label
+		lw: line width
+		skip: integer value that determines the increment between each point
+			to skip when plotting (None for no skipping)
+	'''
+	# Reshape
+
+	x = np.reshape(x, (-1,))
+	var_plot = np.reshape(var_plot, x.shape)
+
+	# Sort
+	idx = np.argsort(x)
+	idx.flatten()
+	x = x[idx]
+	var_plot = var_plot[idx]
+
+	# Plot
+	plt.plot(x[::skip], var_plot[::skip], fmt, label=legend_label, linewidth=lw)
+	plt.ylabel(ylabel)
 
 def triangulate(physics, x, var):
 	'''
@@ -200,7 +230,7 @@ def plot_2D_regular(physics, x, var_plot, **kwargs):
 		# If the user defines levels force the plot to extend and set limits
 		# according to the user defined levels beginning and end.
 		levels = kwargs["levels"]
-		tcf = plt.tricontourf(tris, var_tris, levels=kwargs["levels"], extend='both') 
+		tcf = plt.tricontourf(tris, var_tris, levels=kwargs["levels"], extend='both')
 		if isinstance(levels, np.ndarray):
 			tcf.set_clim(levels[0],levels[-1])
 	else:
@@ -361,7 +391,7 @@ def interpolate_2D_soln_to_points(physics, x, var, xpoints):
 def plot_line_probe(mesh, physics, solver, var_name, xy1, xy2, num_pts=101,
 		plot_numerical=True, plot_exact=False, plot_IC=False,
 		create_new_figure=True, ylabel=None, vs_x=True, fmt="k-",
-		legend_label=None, **kwargs):
+		legend_label=None, lw=1.5, **kwargs):
 	'''
 	This function evaluates a given variable only a specified line segment
 	and creates a 1D plot. 2D only.
@@ -435,7 +465,9 @@ def plot_line_probe(mesh, physics, solver, var_name, xy1, xy2, num_pts=101,
 		xlabel = "y"
 		line = yline
 
-	plot_1D(physics, line, var_plot, ylabel, fmt, legend_label)
+	# plot_1D(physics, line, var_plot, ylabel, fmt, legend_label)
+
+	plot_1D_time(physics, line, var_plot, ylabel, fmt, legend_label, lw)
 
 	finalize_plot(xlabel=xlabel, **kwargs)
 
@@ -525,7 +557,7 @@ def get_numerical_solution(physics, U, x, basis, var_name):
 	    U: state polynomial coefficients
 	    	[num_elems, num_basis_coeffs, num_state_vars]
 	    x: coordinates at which to evaluate solution
-	    	[num_elems, num_pts, ndims], where num_pts is the 
+	    	[num_elems, num_pts, ndims], where num_pts is the
 	    	number of sample points per element
 	    basis: basis object
 	    var_name: name of variable to get
@@ -552,7 +584,7 @@ def get_average_solution(physics, solver, x, basis, var_name):
 	    U: state polynomial coefficients
 	    	[num_elems, num_basis_coeffs, num_state_vars]
 	    x: coordinates at which to evaluate solution
-	    	[num_elems, num_pts, ndims], where num_pts is the number of 
+	    	[num_elems, num_pts, ndims], where num_pts is the number of
 	    	sample points per element
 	    basis: basis object
 	    var_name: name of variable to get
@@ -572,7 +604,7 @@ def get_average_solution(physics, solver, x, basis, var_name):
 		raise NotImplementedError
 
 	#Additions for Ubar
-	solver.elem_helpers.get_gaussian_quadrature(mesh, physics, basis, 
+	solver.elem_helpers.get_gaussian_quadrature(mesh, physics, basis,
 			3*order)
 	solver.elem_helpers.get_basis_and_geom_data(mesh, basis, 3*order)
 
@@ -709,9 +741,9 @@ def plot_mesh(mesh, equal_AR=False, **kwargs):
 
 
 def plot_solution(mesh, physics, solver, var_name, plot_numerical=True,
-		plot_exact=False, plot_average=False, plot_IC=False, 
+		plot_exact=False, plot_average=False, plot_IC=False,
 		create_new_figure=True, ylabel=None, fmt='k-', legend_label=None,
-		equidistant_pts=True, include_mesh=False, regular_2D=False, 
+		equidistant_pts=True, include_mesh=False, regular_2D=False,
 		equal_AR=False, skip=None, **kwargs):
 	'''
 	This function plots the solution. For 2D calculations, the solution will
