@@ -3,12 +3,12 @@
 #       quail: A lightweight discontinuous Galerkin code for
 #              teaching and prototyping
 #		<https://github.com/IhmeGroup/quail>
-#       
+#
 #		Copyright (C) 2020-2021
 #
 #       This program is distributed under the terms of the GNU
 #		General Public License v3.0. You should have received a copy
-#       of the GNU General Public License along with this program.  
+#       of the GNU General Public License along with this program.
 #		If not, see <https://www.gnu.org/licenses/>.
 #
 # ------------------------------------------------------------------------ #
@@ -18,7 +18,7 @@
 #       File : tools/plot_basis_functions/plot_triangle_basis_fcn.py
 #
 #       Plots basis functions for the reference triangle.
-#      
+#
 # ------------------------------------------------------------------------ #
 import sys; sys.path.append('../../src')
 import numpy as np
@@ -32,7 +32,7 @@ import processing.plot as plot
 '''
 Parameters
 '''
-p = 1 # polynomial order
+p = 2 # polynomial order
 b = 2 # the (b+1)th basis function will be plotted
 
 # Basis type

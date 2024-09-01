@@ -678,7 +678,13 @@ class SolverBase(ABC):
 				readwritedatafiles.write_data_file(self,
 						(self.itime + 1) // write_interval)
 
+			# Store point output
+			if (self.itime + 1) % 1 == 0:
+				self.pointOutput.record_points_at_t(self)
+
 			self.itime += 1
+
+		self.pointOutput.write_points()
 
 		t1 = time.time()
 		print("\nWall clock time = %g seconds" % (t1 - t0))

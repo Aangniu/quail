@@ -234,7 +234,15 @@ def plot_2D_regular(physics, x, var_plot, **kwargs):
 		if isinstance(levels, np.ndarray):
 			tcf.set_clim(levels[0],levels[-1])
 	else:
-		tcf = plt.tricontourf(tris, var_tris)
+		vmin = -0.1  # minimum value for the color scale
+		vmax = 0.1   # maximum value for the color scale
+		num_levels = 64
+		levels = np.linspace(vmin, vmax, num_levels)
+		tcf = plt.tricontourf(tris, var_tris, levels=levels, vmin=vmin, vmax=vmax, cmap='seismic')
+		# tcf.set_clim(-.1, .1)
+		cb = plt.colorbar(tcf)
+		cb.ax.set_title("Variable")
+		# plt.show()
 
 	# Show triangulation if requested
 	if "show_triangulation" in kwargs:
@@ -330,9 +338,9 @@ def plot_2D(physics, x, var_plot, ylabel, regular_2D, equal_AR=False,
 	if "ignore_colorbar" in kwargs and kwargs["ignore_colorbar"]:
 		# Do nothing
 		pass
-	else:
-		cb = plt.colorbar()
-		cb.ax.set_title(ylabel)
+	# else:
+		# cb = plt.colorbar()
+		# cb.ax.set_title(ylabel)
 	plt.ylabel("$y$")
 	if equal_AR:
 		plt.gca().set_aspect('equal', adjustable='box')

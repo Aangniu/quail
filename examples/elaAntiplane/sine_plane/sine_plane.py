@@ -5,7 +5,7 @@ TimeStepping = {
 }
 
 Numerics = {
-	"SolutionOrder" : 3,
+	"SolutionOrder" : 1,
 	"SolutionBasis" : "LagrangeTri",
 	"ElementQuadrature" : "Dunavant",
 	"FaceQuadrature" : "GaussLegendre",
@@ -13,8 +13,8 @@ Numerics = {
 
 Mesh = {
 	"ElementShape" : "Triangle",
-	"NumElemsX" : 50,
-	"NumElemsY" : 50,
+	"NumElemsX" : 100,
+	"NumElemsY" : 100,
 	"xmin" : -5.,
 	"xmax" : 5.,
 	"ymin" : -5.,
@@ -54,8 +54,8 @@ BoundaryConditions = {
 }
 
 Output = {
-    "Prefix": "output/Data",
-	"AutoPostProcess" : True,
+    "Prefix": "output/Data_sVzStd1p0o1n100",
+	"AutoPostProcess" : False,
 	"Verbose" : True,
 	"WriteInterval" : 50,
 }

@@ -38,6 +38,8 @@ import numerics.timestepping.stepper as stepper_defs
 import solver.base as base
 import solver.tools as solver_tools
 
+import processing.pointOutput as pointOutput
+
 
 class ElemHelpers(object):
 	'''
@@ -804,6 +806,35 @@ class DG(base.SolverBase):
 		# Initial condition
 		if params["RestartFile"] is None:
 			self.init_state_from_fcn()
+
+		# Initialize the point output
+		# TODO: add point output from time series input (SWITCH)
+		# params["PointOutputPath"]
+		p_output_prefix = 'points/points_sVzStd1p0o1n100'
+		self.pointOutput = pointOutput.PointOutput(p_output_prefix)
+
+		p_out = pointOutput.OutputPoint(dt=0.01,xs=[1,-0.1])
+		self.pointOutput.add_point(p_out)
+		p_out = pointOutput.OutputPoint(dt=0.01,xs=[2,-0.1])
+		self.pointOutput.add_point(p_out)
+		p_out = pointOutput.OutputPoint(dt=0.01,xs=[3,-0.1])
+		self.pointOutput.add_point(p_out)
+		p_out = pointOutput.OutputPoint(dt=0.01,xs=[4,-0.1])
+		self.pointOutput.add_point(p_out)
+		p_out = pointOutput.OutputPoint(dt=0.01,xs=[0.5,-0.1])
+		self.pointOutput.add_point(p_out)
+		p_out = pointOutput.OutputPoint(dt=0.01,xs=[0.1,-0.1])
+		self.pointOutput.add_point(p_out)
+		p_out = pointOutput.OutputPoint(dt=0.01,xs=[0.12,-0.3])
+		self.pointOutput.add_point(p_out)
+		p_out = pointOutput.OutputPoint(dt=0.01,xs=[0.12,0.1])
+		self.pointOutput.add_point(p_out)
+		p_out = pointOutput.OutputPoint(dt=0.01,xs=[2.12,-2.3])
+		self.pointOutput.add_point(p_out)
+		p_out = pointOutput.OutputPoint(dt=0.01,xs=[2.12,2.3])
+		self.pointOutput.add_point(p_out)
+
+		self.pointOutput.get_cell_element_id(mesh)
 
 	def precompute_matrix_helpers(self):
 		mesh = self.mesh

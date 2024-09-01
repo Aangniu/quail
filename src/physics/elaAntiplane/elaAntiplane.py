@@ -22,7 +22,9 @@
 # ------------------------------------------------------------------------ #
 from enum import Enum
 import numpy as np
+
 from scipy.interpolate import LinearNDInterpolator
+import copy as cpObj
 
 import numerics.basis.tools as basis_tools
 
@@ -374,44 +376,44 @@ class Antiplane(AntiplaneWave):
 		source_amp = np.interp(time, times_data, source_data)
 		x_source = sources[0].xs
 
-		print("source at: ", x_source)
+		# print("source at: ", x_source)
 
 		eId = sources[0].ele_ID
-		print("source in: ", mesh.elements[eId].node_coords)
+		# print("source in: ", mesh.elements[eId].node_coords)
 
 		x_elems = elem_helpers.x_elems[eId,:,:] # [nq, nd]
 
 		x_verts = np.array([[1,0], [0,1], [0,0]])
-		print("x_verts has shape: ", x_verts.shape)
+		# print("x_verts has shape: ", x_verts.shape)
 		x_phys = mesh_tools.ref_to_phys(mesh, eId, x_verts)
-		# print("interpolated in ele: ", eId, " from ", x_phys)
-		new_basis = basis
+		new_basis = cpObj.deepcopy(basis)
 		new_basis.get_basis_val_grads(x_verts, get_val=True)
 		verts_val = new_basis.basis_val # [3, nb]
-		print("verts_val has shape: ", verts_val.shape)
+		# print("verts_val has shape: ", verts_val.shape)
 
 		basis_val = elem_helpers.basis_val # [nq, nb]
 
 		x_knowns = np.append(x_phys, x_elems, axis=0)
 		basis_knowns = np.append(verts_val, basis_val, axis=0)
-		print("x_knowns has shape: ", x_knowns.shape)
-		print("basis_knowns has shape: ", basis_knowns.shape)
+		# print("x_knowns has shape: ", x_knowns.shape)
+		# print("basis_knowns has shape: ", basis_knowns.shape)
 
-		print("interpolated in x_knowns: ", eId, " from ", x_knowns)
-		print("interpolated from basis_knowns: ",basis_knowns)
+		# print("interpolated in x_knowns: ", eId, " from ", x_knowns)
+		# print("interpolated from basis_knowns: ",basis_knowns)
 
 		# get the basis function values at the source location
 		interpolator = LinearNDInterpolator(x_knowns, basis_knowns)
 		basis_values_at_sou = interpolator(x_source) # [nb,]
-		print("basis_values_at_sou has shape: ", basis_values_at_sou.shape)
+		# print("basis_values_at_sou has shape: ", basis_values_at_sou.shape)
 
 		res = np.zeros([elem_helpers.x_elems.shape[0], \
 				basis_val.shape[1], physics.NUM_STATE_VARS])
 
 		iepzx, iepyz, ivz = physics.get_state_indices()
 
-		print(basis_values_at_sou)
+		# print(basis_values_at_sou)
 
+		# res[eId,:,iepzx] = source_amp * basis_values_at_sou
 		res[eId,:,ivz] = source_amp * basis_values_at_sou
 
 		return res # [ne, nb, ns]
