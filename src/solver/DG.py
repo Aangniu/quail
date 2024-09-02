@@ -810,7 +810,7 @@ class DG(base.SolverBase):
 		# Initialize the point output
 		# TODO: add point output from time series input (SWITCH)
 		# params["PointOutputPath"]
-		p_output_prefix = 'points/points_sVzStd1p0o1n100'
+		p_output_prefix = 'points/points_Agmsh'
 		self.pointOutput = pointOutput.PointOutput(p_output_prefix)
 
 		p_out = pointOutput.OutputPoint(dt=0.01,xs=[1,-0.1])

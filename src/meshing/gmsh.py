@@ -3,12 +3,12 @@
 #       quail: A lightweight discontinuous Galerkin code for
 #              teaching and prototyping
 #		<https://github.com/IhmeGroup/quail>
-#       
+#
 #		Copyright (C) 2020-2021
 #
 #       This program is distributed under the terms of the GNU
 #		General Public License v3.0. You should have received a copy
-#       of the GNU General Public License along with this program.  
+#       of the GNU General Public License along with this program.
 #		If not, see <https://www.gnu.org/licenses/>.
 #
 # ------------------------------------------------------------------------ #
@@ -452,6 +452,8 @@ def import_physical_groups(fo, mesh):
 	# Need at least one physical group to correspond to volume elements
 	match = False
 	for phys_group in phys_groups:
+		print(phys_group.name)
+		print("here")
 		if phys_group.ndims == mesh.ndims:
 			match = True
 			break
@@ -773,7 +775,7 @@ def get_elem_bface_info_ver2(fo, mesh, phys_groups, num_phys_groups,
 			# Increment number of elements
 			mesh.num_elems += 1
 
-		elif phys_group.ndims == mesh.ndims - 1:
+		elif phys_group.ndims == mesh.ndims - 1 and phys_group.name != "FaultInterface":
 			# Boundary face
 			try:
 				bgroup = mesh.boundary_groups[phys_group.name]
@@ -784,6 +786,10 @@ def get_elem_bface_info_ver2(fo, mesh, phys_groups, num_phys_groups,
 
 			# Increment number of boundary faces
 			bgroup.num_boundary_faces += 1
+
+		elif phys_group.name == "FaultInterface":
+			# Rupture interface
+			mesh.num_rupture_faces += 1
 
 
 def get_elem_bface_info_ver4(fo, mesh, phys_groups, num_phys_groups,
@@ -950,6 +956,11 @@ def add_face_info_to_table(node0_to_faces_info, num_face_nodes, node_IDs,
 	node0 = node_IDs_sort[0]
 	faces_info = node0_to_faces_info[node0]
 
+	# print("node_IDs",node_IDs)
+	# print("node_IDs_sort",node_IDs_sort)
+	# print("node0",node0)
+	# print("faces_info",faces_info)
+
 	# Check if face already exists in table
 	already_added = False
 	if node_IDs_sort in faces_info:
@@ -1058,7 +1069,8 @@ def process_elems_bfaces_ver2(fo, mesh, phys_groups, num_phys_groups,
 		for i in range(num_nodes):
 			node_IDs[i] = old_to_new_node_IDs[int(elist[i])]
 
-		if phys_group.boundary_group_num >= 0:
+		if phys_group.boundary_group_num >= 0 \
+		and phys_group.name != "FaultInterface":
 			# This is a boundary face
 
 			# Get info
@@ -1071,6 +1083,24 @@ def process_elems_bfaces_ver2(fo, mesh, phys_groups, num_phys_groups,
 			# Add face info to table
 			_, _ = add_face_info_to_table(node0_to_faces_info,
 					num_face_nodes, node_IDs, True, bgroup_num, -1,
+					num_bfaces_per_bgroup[bgroup_num])
+
+			# Increment number of boundary faces
+			num_bfaces_per_bgroup[bgroup_num] += 1
+
+		elif phys_group.name == "FaultInterface":
+			# This is a rupture face
+
+			# Get info
+			gbasis = gmsh_element_database[etype].gbasis
+			gorder = gmsh_element_database[etype].gorder
+			bgroup_num = phys_group.boundary_group_num
+			bgroup = mesh.boundary_groups[phys_group.name]
+			num_face_nodes = gbasis.get_num_basis_coeff(1)
+
+			# Add face info to table
+			_, _ = add_face_info_to_table(node0_to_faces_info,
+					num_face_nodes, node_IDs, False, bgroup_num, -1,
 					num_bfaces_per_bgroup[bgroup_num])
 
 			# Increment number of boundary faces
@@ -1237,6 +1267,10 @@ def fill_mesh(fo, ver, mesh, phys_groups, num_phys_groups,
 	# reset num_interior_faces - use as a counter
 	mesh.num_interior_faces = 0
 
+	# Allocate rupture interfaces
+	print("Allocating ",mesh.num_rupture_faces,"rupture interfaces")
+	mesh.allocate_rupture_faces()
+
 	# Table to store face info and connect elements to faces
 	node0_to_faces_info = [{} for n in range(mesh.num_nodes)] # list of dicts
 
@@ -1307,6 +1341,9 @@ def fill_mesh(fo, ver, mesh, phys_groups, num_phys_groups,
 							face_info.face_ID]
 					boundary_face.elem_ID = elem_ID
 					boundary_face.face_ID = face_ID
+				elif face_info.boundary_group_num >= 0:
+					# Rupture face
+					pass
 				else:
 					# Interior face
 
@@ -1323,6 +1360,8 @@ def fill_mesh(fo, ver, mesh, phys_groups, num_phys_groups,
 
 					# Increment number of interior faces
 					mesh.num_interior_faces += 1
+
+					print("face info: ",face_info.boundary_group_num)
 
 				delete_face_info_from_table(node0_to_faces_info,
 						num_face_nodes, global_node_nums)

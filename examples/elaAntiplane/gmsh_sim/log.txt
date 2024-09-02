@@ -1,0 +1,117 @@
+
+=================================================
+||                                             ||
+||  Quail: a discontinuous Galerkin solver in  ||
+||     Python for teaching and prototyping     ||
+||                                             ||
+=================================================
+
+-------------------
+PRINTING INPUT DECK
+-------------------
+
+Restart:
+--------
+    File : None
+    StartFromFileTime : True
+
+TimeStepping:
+-------------
+    InitialTime : 0.0
+    FinalTime : 10.0
+    NumTimeSteps : None
+    TimeStepSize : 0.01
+    CFL : None
+    TimeStepper : LSRK4
+    OperatorSplittingExplicit : SSPRK3
+    OperatorSplittingImplicit : BDF1
+    ODEScheme : FE
+
+Numerics:
+---------
+    SolutionOrder : 1
+    SolutionBasis : LagrangeTri
+    Solver : DG
+    ElementQuadrature : Dunavant
+    FaceQuadrature : GaussLegendre
+    NodeType : Equidistant
+    ColocatedPoints : False
+    L2InitialCondition : True
+    ApplyLimiters : []
+    ShockIndicator : None
+    TVBParameter : 100.0
+    ArtificialViscosity : False
+    AVParameter : 1.0
+    SourceTreatmentADER : Explicit
+    InterpolateFluxADER : True
+    ConvFluxSwitch : True
+    SourceSwitch : True
+    PredictorGuessADER : Average
+    RecalculateJacobianADER : False
+    PredictorThreshold : 1e-15
+
+Mesh:
+-----
+    File : meshes/mesh_dr.msh
+    ElementShape : Segment
+    NumElemsX : 10
+    NumElemsY : 10
+    xmin : -1.0
+    xmax : 1.0
+    ymin : -1.0
+    ymax : 1.0
+    PeriodicBoundariesX : []
+    PeriodicBoundariesY : []
+
+Physics:
+--------
+    Type : ElaAntiplain
+    Transport : NotNeeded
+    ConvFluxNumerical : LaxFriedrichs
+    DiffFluxNumerical : None
+    ShearModulus : 1.0
+    Density : 1.0
+
+InitialCondition:
+-----------------
+    Function : Zeros
+
+ExactSolution:
+--------------
+    Function : Zeros
+
+BoundaryConditions:
+-------------------
+    x1 : {'BCType': 'Extrapolate'}
+    x2 : {'BCType': 'Extrapolate'}
+    y1 : {'BCType': 'Extrapolate'}
+    y2 : {'BCType': 'Extrapolate'}
+
+SourceTerms:
+------------
+    Source1 : {'Function': 'PointSource'}
+
+Output:
+-------
+    Prefix : output/Data_Agmsh
+    WriteInterval : 50
+    WriteInitialSolution : False
+    WriteFinalSolution : True
+    AutoPostProcess : False
+    Verbose : True
+    ProgressBar : False
+    CustomFunctionFilename : custom_user_function
+
+y1
+here
+x2
+here
+y2
+here
+x1
+here
+FaultInterface
+here
+SimulationDomain
+here
+Allocating  18 rupture interfaces

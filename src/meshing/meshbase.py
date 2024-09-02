@@ -3,12 +3,12 @@
 #       quail: A lightweight discontinuous Galerkin code for
 #              teaching and prototyping
 #		<https://github.com/IhmeGroup/quail>
-#       
+#
 #		Copyright (C) 2020-2021
 #
 #       This program is distributed under the terms of the GNU
 #		General Public License v3.0. You should have received a copy
-#       of the GNU General Public License along with this program.  
+#       of the GNU General Public License along with this program.
 #		If not, see <https://www.gnu.org/licenses/>.
 #
 # ------------------------------------------------------------------------ #
@@ -48,6 +48,26 @@ class InteriorFace():
 		self.elemR_ID = 0
 		self.faceR_ID = 0
 
+class RuptureFace():
+	'''
+	This class provides information about a given rupture face.
+
+	Attributes:
+	-----------
+	elemL_ID : int
+		ID of "left" element
+	faceL_ID : int
+		local ID of face from perspective of left element
+	elemR_ID : int
+		ID of "right" element
+	faceR_ID : int
+		local ID of face from perspective of right element
+	'''
+	def __init__(self):
+		self.elemL_ID = 0
+		self.faceL_ID = 0
+		self.elemR_ID = 0
+		self.faceR_ID = 0
 
 class BoundaryFace():
 	'''
@@ -184,6 +204,8 @@ class Mesh():
 		self.node_coords = None
 		self.num_interior_faces = 0
 		self.interior_faces = []
+		self.num_rupture_faces = 0
+		self.rupture_faces = []
 		self.num_boundary_groups = 0
 		self.boundary_groups = {}
 		self.gbasis = gbasis
@@ -242,6 +264,17 @@ class Mesh():
 		'''
 		self.interior_faces = [InteriorFace() for i in range(
 				self.num_interior_faces)]
+
+	def allocate_rupture_faces(self):
+		'''
+		This method allocates self.rupture_faces
+
+		Outputs:
+		--------
+			self.rupture_faces: list of InteriorFace objects
+		'''
+		self.rupture_faces = [RuptureFace() for i in range(
+				self.num_rupture_faces)]
 
 	def add_boundary_group(self, bname):
 		'''
