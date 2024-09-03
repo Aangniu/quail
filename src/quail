@@ -341,109 +341,109 @@ def driver(deck):
 				y1=pb[2], y2=pb[3])
 
 
-	# '''
-	# Physics
-	# '''
-	# # Get order and basis type
-	# order = numerics_params["SolutionOrder"]
-	# basis_type = numerics_params["SolutionBasis"]
+	'''
+	Physics
+	'''
+	# Get order and basis type
+	order = numerics_params["SolutionOrder"]
+	basis_type = numerics_params["SolutionBasis"]
 
-	# # Create physics object
-	# physics = set_physics(mesh, physics_params["Type"])
-	# # Add tranport if using Navier-Stokes
-	# physics.get_transport = ns_tools.set_transport(physics_params["Transport"])
-	# # Set parameters
-	# pparams = physics_params.copy()
-	# pparams.pop("Type") # don't pass this key
-	# pparams.pop("Transport") # don't pass this key
-	# conv_flux_type = pparams.pop("ConvFluxNumerical")
-	# diff_flux_type = pparams.pop("DiffFluxNumerical")
+	# Create physics object
+	physics = set_physics(mesh, physics_params["Type"])
+	# Add tranport if using Navier-Stokes
+	physics.get_transport = ns_tools.set_transport(physics_params["Transport"])
+	# Set parameters
+	pparams = physics_params.copy()
+	pparams.pop("Type") # don't pass this key
+	pparams.pop("Transport") # don't pass this key
+	conv_flux_type = pparams.pop("ConvFluxNumerical")
+	diff_flux_type = pparams.pop("DiffFluxNumerical")
 
-	# physics.set_conv_num_flux(conv_flux_type)
-	# physics.set_diff_num_flux(diff_flux_type)
-	# # Include point sources time series if solving elastic waves
-	# # TODO: diff_flux_type = pparams.pop("DiffFluxNumerical")
-	# physics.include_point_sources(mesh, physics_params["Type"])
+	physics.set_conv_num_flux(conv_flux_type)
+	physics.set_diff_num_flux(diff_flux_type)
+	# Include point sources time series if solving elastic waves
+	# TODO: diff_flux_type = pparams.pop("DiffFluxNumerical")
+	physics.include_point_sources(mesh, physics_params["Type"])
 
-	# physics.set_physical_params(**pparams)
+	physics.set_physical_params(**pparams)
 
-	# # Initial condition
-	# iparams = IC_params.copy()
-	# IC_type = iparams.pop("Function")
-	# physics.set_IC(IC_type=IC_type, **iparams)
+	# Initial condition
+	iparams = IC_params.copy()
+	IC_type = iparams.pop("Function")
+	physics.set_IC(IC_type=IC_type, **iparams)
 
-	# # Exact solution
-	# if bool(exact_params): # checks if dictionary is not empty
-	# 	eparams = exact_params.copy()
-	# 	exact_type = eparams.pop("Function")
-	# 	physics.set_exact(exact_type=exact_type, **eparams)
+	# Exact solution
+	if bool(exact_params): # checks if dictionary is not empty
+		eparams = exact_params.copy()
+		exact_type = eparams.pop("Function")
+		physics.set_exact(exact_type=exact_type, **eparams)
 
-	# # Boundary conditions
-	# physics.BCs = dict.fromkeys(mesh.boundary_groups.keys())
+	# Boundary conditions
+	physics.BCs = dict.fromkeys(mesh.boundary_groups.keys())
 
-	# for bname, bparams in BC_params.items():
-	# 	bparams = bparams.copy()
-	# 	BC_type = bparams.pop("BCType")
+	for bname, bparams in BC_params.items():
+		bparams = bparams.copy()
+		BC_type = bparams.pop("BCType")
 
-	# 	try:
-	# 		# Function required for StateAll
-	# 		fcn_type = bparams.pop("Function")
-	# 		physics.set_BC(bname, BC_type, fcn_type, **bparams)
-	# 	except KeyError:
-	# 		physics.set_BC(bname, BC_type, **bparams)
+		try:
+			# Function required for StateAll
+			fcn_type = bparams.pop("Function")
+			physics.set_BC(bname, BC_type, fcn_type, **bparams)
+		except KeyError:
+			physics.set_BC(bname, BC_type, **bparams)
 
-	# # Source terms
-	# for sparams in source_params.values():
-	# 	sname = sparams["Function"]
-	# 	sparams.pop("Function")
-	# 	physics.set_source(source_type=sname, **sparams)
+	# Source terms
+	for sparams in source_params.values():
+		sname = sparams["Function"]
+		sparams.pop("Function")
+		physics.set_source(source_type=sname, **sparams)
 
-	# '''
-	# Solver
-	# '''
-	# # Merge solver-related params
-	# solver_params = {**stepper_params, **numerics_params, **output_params}
-	# solver_params["RestartFile"] = restart_params["File"]
-	# solver_type = solver_params.pop("Solver")
-	# if SolverType[solver_type] is SolverType.DG:
-	# 	solver = DG.DG(solver_params, physics, mesh)
-	# elif SolverType[solver_type] is SolverType.ADERDG:
-	# 	solver = ADERDG.ADERDG(solver_params, physics, mesh)
-	# else:
-	# 	raise NotImplementedError
+	'''
+	Solver
+	'''
+	# Merge solver-related params
+	solver_params = {**stepper_params, **numerics_params, **output_params}
+	solver_params["RestartFile"] = restart_params["File"]
+	solver_type = solver_params.pop("Solver")
+	if SolverType[solver_type] is SolverType.DG:
+		solver = DG.DG(solver_params, physics, mesh)
+	elif SolverType[solver_type] is SolverType.ADERDG:
+		solver = ADERDG.ADERDG(solver_params, physics, mesh)
+	else:
+		raise NotImplementedError
 
-	# '''
-	# Restart file
-	# '''
-	# if restart_params["File"] is not None:
-	# 	# Old solver
-	# 	solver_old = readwritedatafiles.read_data_file(solver_params[
-	# 			"RestartFile"])
-	# 	# Project if different basis and/or order
-	# 	if order != solver_old.order or solver.basis.BASIS_TYPE != \
-	# 			solver_old.basis.BASIS_TYPE:
-	# 		print("Projecting to a different solution basis and/or order")
-	# 		solver.project_state_to_new_basis(solver_old.state_coeffs,
-	# 				solver_old.basis, solver_old.order)
-	# 	else:
-	# 		solver.state_coeffs = solver_old.state_coeffs
-	# 	# Start from the same time and iteration count
-	# 	if restart_params["StartFromFileTime"]:
-	# 		solver.time = solver_old.time
-	# 		solver.itime = solver_old.itime
-	# 		solver.stepper.dt = 0.
-	# 		stepper_tools.set_time_stepping_approach(solver.stepper,
-	# 				solver.params)
-	# 		solver.stepper.num_time_steps += solver_old.stepper.num_time_steps
+	'''
+	Restart file
+	'''
+	if restart_params["File"] is not None:
+		# Old solver
+		solver_old = readwritedatafiles.read_data_file(solver_params[
+				"RestartFile"])
+		# Project if different basis and/or order
+		if order != solver_old.order or solver.basis.BASIS_TYPE != \
+				solver_old.basis.BASIS_TYPE:
+			print("Projecting to a different solution basis and/or order")
+			solver.project_state_to_new_basis(solver_old.state_coeffs,
+					solver_old.basis, solver_old.order)
+		else:
+			solver.state_coeffs = solver_old.state_coeffs
+		# Start from the same time and iteration count
+		if restart_params["StartFromFileTime"]:
+			solver.time = solver_old.time
+			solver.itime = solver_old.itime
+			solver.stepper.dt = 0.
+			stepper_tools.set_time_stepping_approach(solver.stepper,
+					solver.params)
+			solver.stepper.num_time_steps += solver_old.stepper.num_time_steps
 
 
-	# '''
-	# Run simulation
-	# '''
-	# solver.solve()
+	'''
+	Run simulation
+	'''
+	solver.solve()
 
-	solver = None
-	physics = None
+	# solver = None
+	# physics = None
 	return solver, physics, mesh
 
 

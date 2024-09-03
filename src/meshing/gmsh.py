@@ -452,8 +452,6 @@ def import_physical_groups(fo, mesh):
 	# Need at least one physical group to correspond to volume elements
 	match = False
 	for phys_group in phys_groups:
-		print(phys_group.name)
-		print("here")
 		if phys_group.ndims == mesh.ndims:
 			match = True
 			break
@@ -966,7 +964,18 @@ def add_face_info_to_table(node0_to_faces_info, num_face_nodes, node_IDs,
 	if node_IDs_sort in faces_info:
 		already_added = True
 		face_info = faces_info[node_IDs_sort]
-		face_info.num_adjacent_elems += 1
+		if not face_info.at_boundary:
+			if face_info.face_ID == -1:
+				# rupture face and is first entered after process_xxx(),
+				# change the face_ID and elem_ID here
+				face_info.face_ID = face_ID
+				face_info.elem_ID = elem_ID
+			else:
+				# either rupture face or interior face, entered 2nd time.
+				face_info.num_adjacent_elems += 1
+		else:
+			# boundary face, entered 2nd time.
+			face_info.num_adjacent_elems += 1
 	else:
 		# Not yet added, so add now
 		face_info = FaceInfo()
@@ -1089,22 +1098,25 @@ def process_elems_bfaces_ver2(fo, mesh, phys_groups, num_phys_groups,
 			num_bfaces_per_bgroup[bgroup_num] += 1
 
 		elif phys_group.name == "FaultInterface":
-			# This is a rupture face
+			# This is a rupture interface
+			# Don't need to add face info here, the face info will be added
+			# in the same way as interior to keep two elem and face IDs
+			# that own the interface.
 
-			# Get info
+			# Somehow, keep the phys_group information:
+			# so that it can be used to identify it outside of this function
+			# in the fill_mesh function.
+			# Maybe save in the face_info, but not use the
+			# add_face_info_to_table function()
 			gbasis = gmsh_element_database[etype].gbasis
 			gorder = gmsh_element_database[etype].gorder
-			bgroup_num = phys_group.boundary_group_num
-			bgroup = mesh.boundary_groups[phys_group.name]
+			bgroup_num = 100 # number for rupture
 			num_face_nodes = gbasis.get_num_basis_coeff(1)
 
 			# Add face info to table
 			_, _ = add_face_info_to_table(node0_to_faces_info,
 					num_face_nodes, node_IDs, False, bgroup_num, -1,
-					num_bfaces_per_bgroup[bgroup_num])
-
-			# Increment number of boundary faces
-			num_bfaces_per_bgroup[bgroup_num] += 1
+					-1)
 
 		elif phys_group.boundary_group_num == -1:
 			# This is a volume element
@@ -1270,6 +1282,7 @@ def fill_mesh(fo, ver, mesh, phys_groups, num_phys_groups,
 	# Allocate rupture interfaces
 	print("Allocating ",mesh.num_rupture_faces,"rupture interfaces")
 	mesh.allocate_rupture_faces()
+	count_rupture_faces = 0
 
 	# Table to store face info and connect elements to faces
 	node0_to_faces_info = [{} for n in range(mesh.num_nodes)] # list of dicts
@@ -1341,12 +1354,22 @@ def fill_mesh(fo, ver, mesh, phys_groups, num_phys_groups,
 							face_info.face_ID]
 					boundary_face.elem_ID = elem_ID
 					boundary_face.face_ID = face_ID
+
+					delete_face_info_from_table(node0_to_faces_info,
+						num_face_nodes, global_node_nums)
 				elif face_info.boundary_group_num >= 0:
 					# Rupture face
-					pass
+					if face_info.num_adjacent_elems == 2:
+						rup_face = mesh.rupture_faces[count_rupture_faces]
+						rup_face.elemL_ID = face_info.elem_ID
+						rup_face.faceL_ID = face_info.face_ID
+						rup_face.elemR_ID = elem_ID
+						rup_face.faceR_ID = face_ID
+						count_rupture_faces += 1
+						delete_face_info_from_table(node0_to_faces_info,
+						num_face_nodes, global_node_nums)
 				else:
 					# Interior face
-
 					if face_info.num_adjacent_elems != 2:
 						raise ValueError("More than two elements adjacent " +
 								"to interior face")
@@ -1361,10 +1384,16 @@ def fill_mesh(fo, ver, mesh, phys_groups, num_phys_groups,
 					# Increment number of interior faces
 					mesh.num_interior_faces += 1
 
-					print("face info: ",face_info.boundary_group_num)
-
-				delete_face_info_from_table(node0_to_faces_info,
+					delete_face_info_from_table(node0_to_faces_info,
 						num_face_nodes, global_node_nums)
+
+	# Make sure the recorded rupture face match the actual number
+	if count_rupture_faces != mesh.num_rupture_faces:
+			raise ValueError(f"Recorded {count_rupture_faces} \
+			does not match the actual number of rupture faces \
+			{mesh.num_rupture_faces}")
+
+
 
 	# Any faces not accounted for?
 	num_faces_left = 0

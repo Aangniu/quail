@@ -12,7 +12,7 @@ Numerics = {
 }
 
 Mesh = {
-	"File" : "meshes/mesh_dr.msh",
+	"File" : "meshes/mesh_regular.msh",
 	# "PeriodicBoundariesX" : ["x2", "x1"],
 	# "PeriodicBoundariesY" : ["y2", "y1"],
 }
