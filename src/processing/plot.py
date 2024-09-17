@@ -234,14 +234,16 @@ def plot_2D_regular(physics, x, var_plot, **kwargs):
 		if isinstance(levels, np.ndarray):
 			tcf.set_clim(levels[0],levels[-1])
 	else:
-		vmin = -0.1  # minimum value for the color scale
-		vmax = 0.1   # maximum value for the color scale
+		vmin = -26  # minimum value for the color scale
+		vmax = 26   # maximum value for the color scale
 		num_levels = 64
 		levels = np.linspace(vmin, vmax, num_levels)
 		tcf = plt.tricontourf(tris, var_tris, levels=levels, vmin=vmin, vmax=vmax, cmap='seismic')
 		# tcf.set_clim(-.1, .1)
 		cb = plt.colorbar(tcf)
 		cb.ax.set_title("Variable")
+
+		# tcf = plt.tricontourf(tris, var_tris)
 		# plt.show()
 
 	# Show triangulation if requested

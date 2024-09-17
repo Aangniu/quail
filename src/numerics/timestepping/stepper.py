@@ -3,12 +3,12 @@
 #       quail: A lightweight discontinuous Galerkin code for
 #              teaching and prototyping
 #		<https://github.com/IhmeGroup/quail>
-#       
+#
 #		Copyright (C) 2020-2021
 #
 #       This program is distributed under the terms of the GNU
 #		General Public License v3.0. You should have received a copy
-#       of the GNU General Public License along with this program.  
+#       of the GNU General Public License along with this program.
 #		If not, see <https://www.gnu.org/licenses/>.
 #
 # ------------------------------------------------------------------------ #
@@ -104,7 +104,7 @@ class StepperBase(ABC):
 		return '{self.__class__.__name__}(TimeStep={self.dt})'.format( \
 			self=self)
 
-	def __eq__(self, other): 
+	def __eq__(self, other):
 		if not isinstance(other, StepperBase):
 			# don't attempt to compare against unrelated types
 			return NotImplementedError
@@ -267,6 +267,14 @@ class LSRK4(StepperBase):
 
 			U += self.rk4b[istage]*dU
 			solver.apply_limiter(U)
+		# Update state variable and slip
+		# TODO: add conditions for updating when DR is defined
+		print("Update state variable and slip rate")
+		dr_helper = solver.dr_face_helpers
+		dr_helper.oldStateVar = dr_helper.StateVar.copy()
+		dr_helper.oldSlipRate = dr_helper.SlipRate.copy()
+		# import time
+		# time.sleep(5)
 
 		return res # [num_elems, nb, ns]
 
@@ -370,7 +378,7 @@ class ADER(StepperBase):
 		solver.apply_limiter(W)
 
 		solver.state_coeffs_pred = Up
-		
+
 		return res # [num_elems, nb, ns]
 
 
@@ -507,9 +515,9 @@ class Simpler(Strang):
 
 class ODEIntegrator(StepperBase, source_stepper.SourceSolvers):
 	'''
-	ODEIntegrator method inherits attributes from StepperBase and 
+	ODEIntegrator method inherits attributes from StepperBase and
 	source_stepper.SourceSolvers. It constructs an interface for users
-	to utilize the various time integration schemes in Quail directly 
+	to utilize the various time integration schemes in Quail directly
 	for ODEs and systems of ODEs.
 
 	Additional methods and attributes are commented below.
@@ -519,8 +527,8 @@ class ODEIntegrator(StepperBase, source_stepper.SourceSolvers):
 	def set_ode_integrator(self, ode_scheme, U):
 		'''
 		Sets the ode integrator from the list of available time integration
-		schemes. 
-		
+		schemes.
+
 		Inputs:
 		-------
 		    ode_scheme: name of chosen scheme from params
@@ -533,7 +541,7 @@ class ODEIntegrator(StepperBase, source_stepper.SourceSolvers):
 				the ode time integration scheme
 		'''
 		try:
-			stepper = StepperType[ode_scheme]			
+			stepper = StepperType[ode_scheme]
 		except:
 			pass
 			try:

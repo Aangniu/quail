@@ -3,12 +3,12 @@
 #       quail: A lightweight discontinuous Galerkin code for
 #              teaching and prototyping
 #		<https://github.com/IhmeGroup/quail>
-#       
+#
 #		Copyright (C) 2020-2021
 #
 #       This program is distributed under the terms of the GNU
 #		General Public License v3.0. You should have received a copy
-#       of the GNU General Public License along with this program.  
+#       of the GNU General Public License along with this program.
 #		If not, see <https://www.gnu.org/licenses/>.
 #
 # ------------------------------------------------------------------------ #
@@ -167,7 +167,7 @@ class Extrapolate(BCWeakPrescribed):
 	'''
 	def __init__(self, **kwargs):
 		pass
-		
+
 	def get_boundary_state(self, physics, UqI, normals, x, t):
 		return UqI.copy()
 
@@ -176,10 +176,10 @@ class Extrapolate(BCWeakPrescribed):
 ------------------------
 Numerical flux functions
 ------------------------
-These classes inherit from the ConvNumFluxBase or DiffNumFluxBase class. 
-See ConvNumFluxBase/DiffNumFluxBase for detailed comments of attributes 
-and methods. Information specific to the corresponding child classes can 
-be found below. These classes should correspond to the ConvNumFluxType 
+These classes inherit from the ConvNumFluxBase or DiffNumFluxBase class.
+See ConvNumFluxBase/DiffNumFluxBase for detailed comments of attributes
+and methods. Information specific to the corresponding child classes can
+be found below. These classes should correspond to the ConvNumFluxType
 or DiffNumFluxType enum members above.
 '''
 class LaxFriedrichs(ConvNumFluxBase):
@@ -221,7 +221,7 @@ class SIP(DiffNumFluxBase):
 	def compute_iface_helpers(self, solver):
 		'''
 		Helper function that computes additional terms for the diff flux
-		These include the penalty terms and vol/area ratios for the 
+		These include the penalty terms and vol/area ratios for the
 		left and right states
 
 		Inputs:
@@ -254,7 +254,7 @@ class SIP(DiffNumFluxBase):
 	def compute_bface_helpers(self, solver, bgroup_num):
 		'''
 		Helper function that computes additional terms for the diff flux
-		These include the penalty terms and vol/area ratios for the 
+		These include the penalty terms and vol/area ratios for the
 		boundary states
 
 		Inputs:
@@ -284,7 +284,7 @@ class SIP(DiffNumFluxBase):
 
 	def get_ip_eta(self, mesh, order):
 		'''
-		Calculate the interior penalty constant based on solution 
+		Calculate the interior penalty constant based on solution
 		order and number of faces for the geometric basis
 
 		Inputs:
@@ -303,9 +303,9 @@ class SIP(DiffNumFluxBase):
 
 		return etas[i] * mesh.gbasis.NFACES
 
-	def compute_flux(self, physics, UqL, UqR, gUqL, gUqR, normals):		
+	def compute_flux(self, physics, UqL, UqR, gUqL, gUqR, normals):
 		'''
-		See definition of compute_flux in physics/data.py. Additional 
+		See definition of compute_flux in physics/data.py. Additional
 		comments are below:
 
 		Nomenclature for the additional SIP terms:
@@ -344,7 +344,7 @@ class SIP(DiffNumFluxBase):
 		# Right State
 		Fv_dir += 0.5 * physics.get_diff_flux_interior(UqR, gUqR)
 		Fv_dir_jump = physics.get_diff_flux_interior(UqR, dUxn)
-		
+
 		C4 = 0.5 * eta / hR
 		C5 = 0.5 * n_mag
 
@@ -353,13 +353,13 @@ class SIP(DiffNumFluxBase):
 
 		Fv = np.einsum('ijl, ijkl -> ijk', normals, Fv_dir)
 
-		return Fv, FvL, FvR # [nf, nq, ns], [nf, nq, ns, ndims] 
+		return Fv, FvL, FvR # [nf, nq, ns], [nf, nq, ns, ndims]
 			# [nf, nq, ns, ndims]
 
-	def compute_boundary_flux(self, physics, UqI, UqB, gUq, normals):	
+	def compute_boundary_flux(self, physics, UqI, UqB, gUq, normals):
 		'''
 		Flux computation for the diffusion terms on the boundary faces.
-		See SIP's class definition of compute_flux for nomenclature 
+		See SIP's class definition of compute_flux for nomenclature
 		definitions.
 
 		Inputs:
@@ -372,13 +372,13 @@ class SIP(DiffNumFluxBase):
 			gUq: gradient of the solution state evaluated at the quadrature
 				points of the interior elements face [nf, nq, ns, ndims]
 			normals: normal vector at the boundary faces [nf, nq, ndims]
-		
+
 		Outputs:
 		--------
 			Fv: diffusion flux [nf, nq, ns]
-			FvB: directional diffusion flux evaluated on the boundary 
+			FvB: directional diffusion flux evaluated on the boundary
 				[nf, nq, ns, ndims]
-		'''	
+		'''
 		#Unpack
 		h = self.h
 		eta = self.eta

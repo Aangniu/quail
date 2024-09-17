@@ -810,7 +810,7 @@ class DG(base.SolverBase):
 		# Initialize the point output
 		# TODO: add point output from time series input (SWITCH)
 		# params["PointOutputPath"]
-		p_output_prefix = 'points/points_Agmsh'
+		p_output_prefix = 'points/points_dr'
 		self.pointOutput = pointOutput.PointOutput(p_output_prefix)
 
 		p_out = pointOutput.OutputPoint(dt=0.01,xs=[1,-0.1])
@@ -847,6 +847,12 @@ class DG(base.SolverBase):
 		self.int_face_helpers = InteriorFaceHelpers()
 		self.int_face_helpers.compute_helpers(mesh, physics, basis,
 				self.order)
+
+		import physics.elaAntiplane.dr.drHelper as dr_helpers
+		self.dr_face_helpers = dr_helpers.DRFaceHelpers()
+		self.dr_face_helpers.compute_helpers(mesh, physics, basis,
+				self.order)
+
 		self.bface_helpers = BoundaryFaceHelpers()
 		self.bface_helpers.compute_helpers(mesh, physics, basis,
 				self.order)
@@ -994,6 +1000,122 @@ class DG(base.SolverBase):
 			resR_diff = self.calculate_boundary_flux_integral_sum(
 					faces_to_basis_ref_gradR[faceR_IDs], quad_wts,
 					FR_phys)
+
+		return resL, resR, resL_diff, resR_diff # [nif, nb, ns]
+
+	def get_rupture_face_residual(self, faceL_IDs, faceR_IDs, UcL, UcR):
+		# Unpack
+		mesh = self.mesh
+		physics = self.physics
+		fluxes = self.params["ConvFluxSwitch"]
+
+		dr_face_helpers = self.dr_face_helpers
+		elem_helpers = self.elem_helpers
+		vol_elems = elem_helpers.vol_elems
+		face_lengths = dr_face_helpers.face_lengths
+
+		quad_wts = dr_face_helpers.quad_wts
+		faces_to_basisL = dr_face_helpers.faces_to_basisL
+		faces_to_basisR = dr_face_helpers.faces_to_basisR
+		faces_to_basis_ref_gradL = dr_face_helpers.faces_to_basis_ref_gradL
+		faces_to_basis_ref_gradR = dr_face_helpers.faces_to_basis_ref_gradR
+		ijacL_elems = dr_face_helpers.ijacL_elems
+		ijacR_elems = dr_face_helpers.ijacR_elems
+
+		normals_int_faces = dr_face_helpers.normals_int_faces
+				# [nf, nq, ndims]
+
+		parallels_int_faces = dr_face_helpers.parallels_int_faces
+				# [nf, nq, ndims]
+
+		face_phy_coords = dr_face_helpers.rupture_quad_phys_coords
+				# [nf, nq, ndims]
+
+		# We want shallow copy here, which means they share the same address
+		# state variables
+		stVar_dr_faces = dr_face_helpers.StateVar
+		# slip rate
+		slRate_dr_faces = dr_face_helpers.SlipRate
+				# [nf, nq, ndims], here nf is the number of rupture faces
+
+		oSV = dr_face_helpers.oldStateVar
+		oSR = dr_face_helpers.oldSlipRate
+
+		ns = physics.NUM_STATE_VARS
+		nq = quad_wts.shape[0]
+
+		# Interpolate state at quad points
+		UqL = helpers.evaluate_state(UcL, faces_to_basisL[faceL_IDs])
+				# [nf, nq, ns]
+		UqR = helpers.evaluate_state(UcR, faces_to_basisR[faceR_IDs])
+				# [nf, nq, ns]
+
+		# Interpolate gradient of state at quad points
+		gUqL_ref = self.evaluate_gradient(UcL,
+				faces_to_basis_ref_gradL[faceL_IDs])
+		gUqR_ref = self.evaluate_gradient(UcR,
+				faces_to_basis_ref_gradR[faceR_IDs])
+
+		# Make gradient the physical gradient at L/R states
+		gUqL = self.ref_to_phys_grad(ijacL_elems, gUqL_ref)
+		gUqR = self.ref_to_phys_grad(ijacR_elems, gUqR_ref)
+
+		# Allocate resL and resR (needed for operator splitting)
+		nifL = self.dr_face_helpers.elemL_IDs.shape[0]
+		nifR = self.dr_face_helpers.elemR_IDs.shape[0]
+		resL = np.zeros([nifL, nq, ns])
+		resR = np.zeros([nifR, nq, ns])
+		resL_diff = np.zeros([nifL, nq, ns])
+		resR_diff = np.zeros([nifR, nq, ns])
+
+		if physics.diff_flux_fcn:
+			# Calculate diffusion flux helpers
+			physics.diff_flux_fcn.compute_iface_helpers(self)
+
+		if fluxes:
+			dt = self.stepper.dt
+			solver_time = self.time
+			# Compute numerical flux
+
+			# print("Before")
+			# # print("stVar_dr_faces", stVar_dr_faces)
+			# print("dr_face_helpers.xs", dr_face_helpers.rupture_quad_phys_coords)
+			# print("dr_face_helpers.StateVar", dr_face_helpers.StateVar)
+			# # print("slRate_dr_faces", slRate_dr_faces[0])
+			# print("dr_face_helpers.SlipRate", dr_face_helpers.SlipRate)
+			FqL, FqR = physics.get_dr_flux_numerical(UqL, UqR, normals_int_faces,\
+					parallels_int_faces, stVar_dr_faces, slRate_dr_faces,\
+					oSV, oSR, dt, solver_time, face_phy_coords)
+					# [nf, nq, ns]
+			# print("After")
+			# print("stVar_dr_faces", stVar_dr_faces[0])
+			# print("dr_face_helpers.StateVar", dr_face_helpers.StateVar[0])
+			# print("slRate_dr_faces", slRate_dr_faces[0])
+			# print("dr_face_helpers.SlipRate", dr_face_helpers.SlipRate[0])
+
+			# # Compute diffusion flux, if needed
+			# Fq_diff, FL, FR = physics.get_diff_flux_numerical(UqL, UqR,
+			# 		gUqL, gUqR, normals_int_faces) # [nf, nq, ns],
+			# 		# [nf, nq, ns, ndims], [nf, nq, ns, ndims]
+			# # Fq -= Fq_diff
+
+			# FL_phys = self.ref_to_phys_grad(ijacL_elems, FL)
+			# FR_phys = self.ref_to_phys_grad(ijacR_elems, FR)
+
+			# Compute contribution to left and right element residuals
+			resL = solver_tools.calculate_boundary_flux_integral(
+					faces_to_basisL[faceL_IDs], quad_wts, FqL)
+			resR = solver_tools.calculate_boundary_flux_integral(
+					faces_to_basisR[faceR_IDs], quad_wts, FqR)
+
+			# # Compute additional boundary flux integrals for diffusion terms
+			# resL_diff = self.calculate_boundary_flux_integral_sum(
+			# 		faces_to_basis_ref_gradL[faceL_IDs], quad_wts, FL_phys)
+
+			# resR_diff = self.calculate_boundary_flux_integral_sum(
+			# 		faces_to_basis_ref_gradR[faceR_IDs], quad_wts,
+			# 		FR_phys)
+			resL_diff, resR_diff = None, None
 
 		return resL, resR, resL_diff, resR_diff # [nif, nb, ns]
 

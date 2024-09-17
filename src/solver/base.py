@@ -457,6 +457,7 @@ class SolverBase(ABC):
 		self.get_boundary_face_residuals(U, res)
 		self.get_element_residuals(U, res)
 		self.get_interior_face_residuals(U, res)
+		self.get_rupture_face_residuals(U, res)
 
 		return res
 
@@ -515,6 +516,46 @@ class SolverBase(ABC):
 		# correct left/right states.
 		np.add.at(res, elemL_IDs,  RL_diff)
 		np.add.at(res, elemR_IDs,  RR_diff)
+
+	def get_rupture_face_residuals(self, U, res):
+		'''
+		Computes interior face residual contributions.
+
+		Inputs:
+		-------
+			U: solution array
+			res: residual array
+
+		Outputs:
+		--------
+			res: calculated residual array (includes all interior face
+				contributions)
+		'''
+		mesh = self.mesh
+		dr_face_helpers = self.dr_face_helpers
+		elemL_IDs = dr_face_helpers.elemL_IDs
+		elemR_IDs = dr_face_helpers.elemR_IDs
+		faceL_IDs = dr_face_helpers.faceL_IDs
+		faceR_IDs = dr_face_helpers.faceR_IDs
+
+		# Extract state coefficients of elements to the left and right of
+		# this interior face
+		UL = U[elemL_IDs]
+		UR = U[elemR_IDs]
+
+		# Calculate face residuals for left and right elements
+		RL, RR, RL_diff, RR_diff = self.get_rupture_face_residual(faceL_IDs, faceR_IDs, UL,
+				UR)
+
+		# Add this residual back to the global. The np.add.at function is
+		# used to correctly handle duplicate element IDs.
+		np.add.at(res, elemL_IDs, -RL)
+		np.add.at(res, elemR_IDs, RR)
+
+		# # Add the additional diffusion portion of the residual to the
+		# # correct left/right states.
+		# np.add.at(res, elemL_IDs,  RL_diff)
+		# np.add.at(res, elemR_IDs,  RR_diff)
 
 	def get_boundary_face_residuals(self, U, res):
 		'''
@@ -681,6 +722,11 @@ class SolverBase(ABC):
 			# Store point output
 			if (self.itime + 1) % 1 == 0:
 				self.pointOutput.record_points_at_t(self)
+
+			# Store fault output
+			if (self.itime + 1) % 10 == 0:
+				faultFileName = "faultOut/FaultFastIter0p1DataMix_" + str(self.itime + 1) + ".txt"
+				self.dr_face_helpers.write_fault_profile(faultFileName)
 
 			self.itime += 1
 

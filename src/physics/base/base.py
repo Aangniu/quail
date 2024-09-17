@@ -237,6 +237,7 @@ class PhysicsBase(ABC):
 		self.source_terms = []
 		self.conv_flux_fcn = None
 		self.diff_flux_fcn = None
+		self.dr_flux_fcn = None
 
 		# Set indices and slices corresponding to the state variables
 		set_state_indices_slices(self)
@@ -458,6 +459,10 @@ class PhysicsBase(ABC):
 				self.conv_num_flux_map)
 		# Instantiate class and store
 		self.conv_flux_fcn = conv_num_flux_class(**kwargs)
+
+		dr_num_flux_class = process_map("DynamicRupture",
+				self.conv_num_flux_map)
+		self.dr_flux_fcn = dr_num_flux_class(**kwargs)
 
 	def set_diff_num_flux(self, diff_num_flux_type, **kwargs):
 		'''

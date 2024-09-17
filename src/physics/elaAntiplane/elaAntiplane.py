@@ -45,8 +45,8 @@ from physics.elaAntiplane.functions import FcnType as antiWave_fcn_type
 from physics.elaAntiplane.functions import SourceType as \
 	antiWave_source_type
 
-# from physics.euler.functions import ConvNumFluxType as \
-# 		euler_conv_num_flux_type
+from physics.elaAntiplane.functions import ConvNumFluxType as \
+		antiWave_conv_num_flux_type
 
 class PointSource:
     def __init__(self, dt, xs, data):
@@ -186,7 +186,7 @@ class AntiplaneWave(base.PhysicsBase):
 		'''
 		source_times = np.linspace(0,10,1001)
 		# generate a source_data that formr gaussian function in time
-		source_data = 1.0*np.exp(-(source_times - 2.0)**2/1.0**2)
+		source_data = 0.0*np.exp(-(source_times - 2.0)**2/1.0**2)
 		self.point_sources.append(PointSource(0.01, [-0.1001, -0.1001], source_data))
 
 		for elem_ID in range(mesh.num_elems):
@@ -242,6 +242,20 @@ class AntiplaneWave(base.PhysicsBase):
 					raise errors.NotPhysicalError
 			return varq
 
+		def get_shearModulus():
+			varq = mu
+			if flag_non_physical:
+				if np.any(varq < 0.):
+					raise errors.NotPhysicalError
+			return varq
+
+		def get_density():
+			varq = rho
+			if flag_non_physical:
+				if np.any(varq < 0.):
+					raise errors.NotPhysicalError
+			return varq
+
 		''' Compute '''
 		vname = self.AdditionalVariables[var_name].name
 
@@ -249,6 +263,10 @@ class AntiplaneWave(base.PhysicsBase):
 			varq = get_waveSpeed()
 		elif vname is self.AdditionalVariables["MaxWaveSpeed"].name:
 			varq = get_waveSpeed()
+		elif vname is self.AdditionalVariables["Mu"].name:
+			varq = get_shearModulus()
+		elif vname is self.AdditionalVariables["Rho"].name:
+			varq = get_density()
 		else:
 			raise NotImplementedError
 
@@ -320,7 +338,9 @@ class Antiplane(AntiplaneWave):
 			antiWave_source_type.PointSource : antiWave_fcns.PointSource,
 		})
 
-		# self.conv_num_flux_map.update({
+		self.conv_num_flux_map.update({
+			antiWave_conv_num_flux_type.DynamicRupture : antiWave_fcns.DynamicRupture,
+		})
 		# 	base_conv_num_flux_type.LaxFriedrichs :
 		# 		antiWave_fcns.LaxFriedrichs2D,
 		# 	#TODO: Add upwind flux
@@ -440,3 +460,25 @@ class Antiplane(AntiplaneWave):
 		F[:, :, ivz, 1] = -2.0*mu/rho*epyz
 
 		return F, (0.5*vz, 0.5*vz, -2.0*mu/rho*epzx, -2.0*mu/rho*epyz)
+
+	def get_dr_flux_numerical(self, UqL, UqR, normals,\
+				parallels, stVars, slRates, oSV, oSR, dt,t,xs):
+		'''
+		This method computes the dynamic rupture numerical flux.
+
+		Inputs:
+		-------
+			UqL: left values of the state variables (typically at the
+				quadrature points) [nf, nq, ns]
+			UqR: right values of the state variables (typically at the
+				quadrature points) [nf, nq, ns]
+			normals: directions from left to right [nf, nq, ndims]
+
+		Outputs:
+		--------
+			Fnum: numerical flux values [nf, nq, ns]
+		'''
+		Fnum = self.dr_flux_fcn.compute_flux(self, UqL, UqR, normals,\
+				parallels, stVars, slRates, oSV, oSR, dt, t, xs)
+
+		return Fnum

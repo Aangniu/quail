@@ -1,5 +1,5 @@
 TimeStepping = {
-	"FinalTime" : 10.0,
+	"FinalTime" : 3.0,
 	"TimeStepSize" : 0.01,
 	"TimeStepper" : "LSRK4",
 }
@@ -12,7 +12,7 @@ Numerics = {
 }
 
 Mesh = {
-	"File" : "meshes/mesh_regular.msh",
+	"File" : "meshes/mesh_drFine.msh",
 	# "PeriodicBoundariesX" : ["x2", "x1"],
 	# "PeriodicBoundariesY" : ["y2", "y1"],
 }
@@ -52,7 +52,7 @@ BoundaryConditions = {
 # }
 
 Output = {
-    "Prefix": "output/Data_Agmsh",
+    "Prefix": "output/Data_drFastIter0p1",
 	"AutoPostProcess" : False,
 	"Verbose" : True,
 	"WriteInterval" : 50,

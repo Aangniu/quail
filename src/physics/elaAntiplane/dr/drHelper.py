@@ -1,4 +1,8 @@
+import numpy as np
+
 import solver.DG as solver_DG
+import numerics.basis.tools as basis_tools
+import meshing.tools as mesh_tools
 
 class DRFaceHelpers(solver_DG.ElemHelpers):
 	'''
@@ -35,6 +39,10 @@ class DRFaceHelpers(solver_DG.ElemHelpers):
 	UqR: numpy array
 		solution vector evaluated at the face quadrature points for right
 		element
+	SlipRate: numpy array
+		slip rate vector evaluated at the face quadrature points
+	StateVar: numpy array
+		state variable vector evaluated at the face quadrature points
 	Fq: numpy array
 		flux vector evaluated at the face quadrature points
 	elemL_IDs: numpy array
@@ -75,8 +83,14 @@ class DRFaceHelpers(solver_DG.ElemHelpers):
 		self.faces_to_basis_ref_gradL = np.zeros(0)
 		self.faces_to_basis_ref_gradR = np.zeros(0)
 		self.normals_int_faces = np.zeros(0)
+		self.parallels_int_faces = np.zeros(0)
+		self.rupture_quad_phys_coords = np.zeros(0)
 		self.UqL = np.zeros(0)
 		self.UqR = np.zeros(0)
+		self.SlipRate = np.zeros(0)
+		self.StateVar = np.zeros(0)
+		self.oldSlipRate = np.zeros(0)
+		self.oldStateVar = np.zeros(0)
 		self.Fq = np.zeros(0)
 		self.elemL_IDs = np.empty(0, dtype=int)
 		self.elemR_IDs = np.empty(0, dtype=int)
@@ -160,7 +174,7 @@ class DRFaceHelpers(solver_DG.ElemHelpers):
 		nb = basis.nb
 		nfaces_per_elem = basis.NFACES
 		# TODO: count the number of rupture faces
-		nfaces = mesh.num_interior_faces
+		nfaces = mesh.num_rupture_faces
 
 		# Allocate
 		self.faces_to_basisL = np.zeros([nfaces_per_elem, nq, nb])
@@ -171,9 +185,13 @@ class DRFaceHelpers(solver_DG.ElemHelpers):
 				nq, nb, ndims_basis])
 		self.ijacL_elems = np.zeros([nfaces, nq, ndims, ndims])
 		self.ijacR_elems = np.zeros([nfaces, nq, ndims, ndims])
-		self.normals_int_faces = np.zeros([mesh.num_interior_faces, nq,
+		self.normals_int_faces = np.zeros([mesh.num_rupture_faces, nq,
 				ndims])
-		djac_faces = np.zeros([mesh.num_interior_faces, nq])
+		self.parallels_int_faces = np.zeros([mesh.num_rupture_faces, nq,
+				ndims])
+		self.rupture_quad_phys_coords = np.zeros([mesh.num_rupture_faces, nq,
+				ndims])
+		djac_faces = np.zeros([mesh.num_rupture_faces, nq])
 
 		# Get values on each face (from both left and right perspectives)
 		# for both the basis and the reference gradient of the basis
@@ -192,26 +210,34 @@ class DRFaceHelpers(solver_DG.ElemHelpers):
 
 		# Normals
 		i = 0
-		for interior_face in mesh.interior_faces:
+		for rupture_face in mesh.rupture_faces:
 			normals = mesh.gbasis.calculate_normals(mesh,
-					interior_face.elemL_ID, interior_face.faceL_ID, quad_pts)
+					rupture_face.elemL_ID, rupture_face.faceL_ID, quad_pts)
 			self.normals_int_faces[i] = normals
 
 			# Left state
 			# Convert from face ref space to element ref space
 			elem_pts = basis.get_elem_ref_from_face_ref(
-					interior_face.faceL_ID, quad_pts)
+					rupture_face.faceL_ID, quad_pts)
 
 			_, _, ijacL = basis_tools.element_jacobian(mesh,
-					interior_face.elemL_ID, elem_pts, get_djac=False,
+					rupture_face.elemL_ID, elem_pts, get_djac=False,
 					get_jac=False, get_ijac=True)
 
-			# Right state
+            # Collect the physical coordinates of the qts that stores slip rate
+			# and state variable.
+			self.rupture_quad_phys_coords[i] = \
+			    mesh_tools.ref_to_phys(mesh, rupture_face.elemL_ID, elem_pts)
+
+			self.parallels_int_faces[i] = \
+				self.rupture_quad_phys_coords[i][1] - self.rupture_quad_phys_coords[i][0]
+
+            # Right state
 			# Convert from face ref space to element ref space
 			elem_pts = basis.get_elem_ref_from_face_ref(
-					interior_face.faceR_ID, quad_pts[::-1])
+					rupture_face.faceR_ID, quad_pts[::-1])
 			_, _, ijacR = basis_tools.element_jacobian(mesh,
-					interior_face.elemR_ID, elem_pts, get_djac=False,
+					rupture_face.elemR_ID, elem_pts, get_djac=False,
 					get_jac=False, get_ijac=True)
 
 			# Store
@@ -262,19 +288,55 @@ class DRFaceHelpers(solver_DG.ElemHelpers):
 			self.faceR_IDs: Face IDs to the right of each interior face
 				[num_interior_faces]
 		'''
-		self.elemL_IDs = np.empty(mesh.num_interior_faces, dtype=int)
-		self.elemR_IDs = np.empty(mesh.num_interior_faces, dtype=int)
-		self.faceL_IDs = np.empty(mesh.num_interior_faces, dtype=int)
-		self.faceR_IDs = np.empty(mesh.num_interior_faces, dtype=int)
-		for face_ID in range(mesh.num_interior_faces):
-			int_face = mesh.interior_faces[face_ID]
-			self.elemL_IDs[face_ID] = int_face.elemL_ID
-			self.elemR_IDs[face_ID] = int_face.elemR_ID
-			self.faceL_IDs[face_ID] = int_face.faceL_ID
-			self.faceR_IDs[face_ID] = int_face.faceR_ID
+		self.elemL_IDs = np.empty(mesh.num_rupture_faces, dtype=int)
+		self.elemR_IDs = np.empty(mesh.num_rupture_faces, dtype=int)
+		self.faceL_IDs = np.empty(mesh.num_rupture_faces, dtype=int)
+		self.faceR_IDs = np.empty(mesh.num_rupture_faces, dtype=int)
+		for face_ID in range(mesh.num_rupture_faces):
+			dr_face = mesh.rupture_faces[face_ID]
+			self.elemL_IDs[face_ID] = dr_face.elemL_ID
+			self.elemR_IDs[face_ID] = dr_face.elemR_ID
+			self.faceL_IDs[face_ID] = dr_face.faceL_ID
+			self.faceR_IDs[face_ID] = dr_face.faceR_ID
+
+	def initialize_slipRate_stateVar(self, mesh):
+		num_rupture_faces = mesh.num_rupture_faces
+		quad_pts = self.quad_pts
+		nq = quad_pts.shape[0]
+
+		self.SlipRate = np.zeros([num_rupture_faces, nq])
+		self.StateVar = np.zeros([num_rupture_faces, nq])
+		self.SlipRate.fill(1.0e-16)
+		# self.StateVar.fill(30398221659058.594)
+		xs = self.rupture_quad_phys_coords
+
+		# set a different StateVar value at place where x[0] < 0.5
+		for i in range(num_rupture_faces):
+			for j in range(nq):
+				if np.abs(xs[i][j][0]) < 0.5:
+					self.StateVar[i][j] = 2.491022705514491e+16
+				else:
+					self.StateVar[i][j] = 2.491022705514491e+16
+		# assing SlipRate to oldSlipRate
+		self.oldSlipRate = self.SlipRate.copy()
+		self.oldStateVar = self.StateVar.copy()
 
 	def compute_helpers(self, mesh, physics, basis, order):
 		self.get_gaussian_quadrature(mesh, physics, basis, order)
 		self.get_basis_and_geom_data(mesh, basis, order)
 		self.alloc_other_arrays(physics, basis, order)
 		self.store_neighbor_info(mesh)
+		self.initialize_slipRate_stateVar(mesh)
+
+	def write_fault_profile(self, fileName = "fault.txt"):
+		'''
+		Write the slip rate and state variable to a file.
+ 		'''
+		with open(fileName, "w") as f:
+			f.write("x\ty\tSlipRate\tStateVar\n")
+			for i in range(self.SlipRate.shape[0]):
+				for j in range(self.SlipRate.shape[1]):
+					f.write(f"{self.rupture_quad_phys_coords[i][j][0]}\t\
+			            {self.rupture_quad_phys_coords[i][j][1]}\t\
+			            {self.SlipRate[i][j]}\t{self.StateVar[i][j]}\n")
+			# f.write("\n")
